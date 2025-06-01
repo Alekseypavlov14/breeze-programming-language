@@ -31,7 +31,10 @@ class Parser:
   # list of methods to match different statements
   # routes to other parse methods
   def parse_statement(self):
-    pass
+    if self.match_condition_statement():
+      return self.parse_comment()
+    if self.match_block_statement():
+      return self.parse_block_statement()
 
   # Methods to require standalone statements
   # Require tokens. Check before
@@ -43,6 +46,8 @@ class Parser:
   def parse_while_statement(self):
     pass
   def parse_function_declaration_statement(self):
+    pass
+  def parse_class_declaration_statement(self):
     pass
   def parse_block_statement(self):
     # get left curly brace
@@ -61,20 +66,32 @@ class Parser:
       statements.append(self.parse_statement())
       
     raise ParserError(f'Expected token {RIGHT_CURLY_BRACE_TOKEN}')
-  
+  def parse_comment(self):
+    # require comment
+    self.require_token(COMMENT_TOKEN)
+
+    # skip symbols and stop after consuming new line
+    while not self.is_end():
+      if self.consume_current_token() == NEWLINE_TOKEN:
+        break
+
   # Methods to check statements (without requiring)
   # check if current statement is of type
 
   def match_condition_statement(self):
-    return self.match_token(IF_KEYWORD)
+    return self.match_token(map_keyword_to_token(IF_KEYWORD))
   def match_for_statement(self):
-    return self.match_token(FOR_KEYWORD)
+    return self.match_token(map_keyword_to_token(FOR_KEYWORD))
   def match_while_statement(self):
-    return self.match_token(WHILE_KEYWORD)
+    return self.match_token(map_keyword_to_token(WHILE_KEYWORD))
   def match_function_declaration_statement(self):
-    return self.match_token(FUNCTION_KEYWORD)
+    return self.match_token(map_keyword_to_token(FUNCTION_KEYWORD))
+  def match_class_declaration_statement(self):
+    return self.match_token(map_keyword_to_token(CLASS_KEYWORD))
   def match_block_statement(self):
     return self.match_token(LEFT_CURLY_BRACE_TOKEN)
+  def match_comment(self):
+    return self.match_token(COMMENT_TOKEN)
 
   # Methods to parse expressions
 

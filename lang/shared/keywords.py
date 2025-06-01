@@ -29,13 +29,14 @@ FROM_KEYWORD = 'from'
 EXPORT_KEYWORD = 'export'
 
 # for classes
+CLASS_KEYWORD = 'class'
 NEW_KEYWORD = 'new'
 
 # list of keywords used in language
 KEYWORDS = [
   VAR_KEYWORD,
   CONST_KEYWORD,
-  
+
   IF_KEYWORD,
   ELSE_KEYWORD,
   
@@ -51,6 +52,7 @@ KEYWORDS = [
   FROM_KEYWORD,
   EXPORT_KEYWORD,
 
+  CLASS_KEYWORD,
   NEW_KEYWORD,
 ]
 
