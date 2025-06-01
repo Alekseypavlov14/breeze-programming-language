@@ -8,6 +8,9 @@ SPACE_TOKEN = ('SPACE', r'\s')
 NUMBER_TOKEN = ('NUMBER', r'\d[\d\.]*')
 STRING_TOKEN = ('STRING', r"\"((?:[^\"\\]|\\.)*?)\"|\'((?:[^\'\\]|\\.)*?)\'")
 
+# function lambda
+LAMBDA_TOKEN = ('LAMBDA', r'=>')
+
 # logical
 GREATER_THAN_OR_EQUAL_TOKEN = ('GREATER_THAN_OR_EQUAL', r'>=')
 GREATER_THAN_TOKEN = ('GREATER_THAN', r'>')
@@ -17,6 +20,7 @@ EQUAL_TOKEN = ('EQUAL', r'==')
 NOT_EQUAL_TOKEN = ('NOT_EQUAL', r'!=')
 AND_TOKEN = ('AND', r'&&')
 OR_TOKEN = ('OR', r'\|\|')
+NOT_TOKEN = ('NOT', r'!')
 
 # unary operators
 INCREMENT_TOKEN = ('INCREMENT', r'\+\+')
@@ -48,7 +52,6 @@ DOUBLE_QUOTE_TOKEN = ('DOUBLE_QUOTE', r'\"')
 # special symbols
 COMMA_TOKEN = ('COMMA', r'\,')
 DOT_TOKEN = ('DOT', r'\.')
-QUESTION_TOKEN = ('QUESTION', r'\?')
 
 TOKEN_SPECIFICATION = [
   IDENTIFIER_TOKEN,
@@ -58,6 +61,8 @@ TOKEN_SPECIFICATION = [
 
   NUMBER_TOKEN,
   STRING_TOKEN,
+
+  LAMBDA_TOKEN,
   
   GREATER_THAN_OR_EQUAL_TOKEN,
   GREATER_THAN_TOKEN,
@@ -67,6 +72,7 @@ TOKEN_SPECIFICATION = [
   NOT_EQUAL_TOKEN,
   AND_TOKEN,
   OR_TOKEN,
+  NOT_TOKEN,
 
   INCREMENT_TOKEN,
   DECREMENT_TOKEN,
@@ -92,7 +98,6 @@ TOKEN_SPECIFICATION = [
   DOUBLE_QUOTE_TOKEN,
   
   COMMA_TOKEN,
-  QUESTION_TOKEN,
   DOT_TOKEN,
 ]
 

@@ -1,5 +1,6 @@
 from parser.types.expressions import *
 from shared.tokens import *
+from shared.keywords import *
 
 import math
 import inspect
@@ -12,6 +13,8 @@ BASE_PRECEDENCE = -1
 # from most to least
 OPERATOR_PRECEDENCE = [
   (ASSIGN_TOKEN, BinaryOperationExpression),
+
+  (LAMBDA_TOKEN, BinaryOperationExpression),
 
   (OR_TOKEN, BinaryOperationExpression),
   (AND_TOKEN, BinaryOperationExpression),
@@ -36,11 +39,15 @@ OPERATOR_PRECEDENCE = [
   (MULTIPLICATION_TOKEN, BinaryOperationExpression),
   (DIVISION_TOKEN, BinaryOperationExpression),
 
-  (INCREMENT_TOKEN, UnaryOperationExpression),
-  (DECREMENT_TOKEN, UnaryOperationExpression),
+  (NOT_TOKEN, PrefixUnaryOperationExpression),
+
+  (INCREMENT_TOKEN, AffixUnaryOperationExpression),
+  (DECREMENT_TOKEN, AffixUnaryOperationExpression),
 
   (LEFT_SQUARE_BRACKET_TOKEN, GroupingExpression),
   (LEFT_PARENTHESES_TOKEN, GroupingExpression),
+
+  (map_keyword_to_token(NEW_KEYWORD), SuffixUnaryOperationExpression),
 
   (DOT_TOKEN, BinaryOperationExpression),
 ]
@@ -63,6 +70,12 @@ def get_operator_precedence(token: Token):
 
 def is_unary_operator(operator: Token):
   return is_operator_of_class(operator, UnaryOperationExpression)
+def is_prefix_unary_operator(operator: Token):
+  return is_operator_of_class(operator, PrefixUnaryOperationExpression)
+def is_suffix_unary_operator(operator: Token):
+  return is_operator_of_class(operator, SuffixUnaryOperationExpression)
+def is_affix_unary_operator(operator: Token):
+  return is_operator_of_class(operator, AffixUnaryOperationExpression)
 
 def is_binary_operator(operator: Token):
   return is_operator_of_class(operator, BinaryOperationExpression)
