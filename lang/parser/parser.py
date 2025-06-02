@@ -13,9 +13,6 @@ from shared.keywords import *
 # class that parses token list to AST
 class Parser:
   def __init__(self):
-    # contains parsed AST
-    self.root = BlockStatement()
-    
     # list of tokens that are in use to build AST
     self.tokens: list[Token] = []
     # list position
@@ -24,10 +21,18 @@ class Parser:
   # parses token list to AST
   # entry point
   def parse(self, tokens: list[Token]):
-    # reset root AST
-    self.reset_root()
     # load tokens
     self.load_tokens(tokens)
+
+    # init statements
+    statements = []
+
+    # parse module 
+    while not self.is_end():
+      statements.append(self.parse_statement())
+
+    # return block of statements
+    return BlockStatement(statements)
 
   # list of methods to match different statements
   # routes to other parse methods
@@ -44,6 +49,9 @@ class Parser:
       return self.parse_function_declaration_statement()
     if self.match_block_statement():
       return self.parse_block_statement()
+    
+    # by default, parse as expression
+    return self.parse_expression_statement()
 
   # Methods to require standalone statements
   # Require tokens. Check before
@@ -211,6 +219,8 @@ class Parser:
       statements.append(self.parse_statement())
       
     raise ParserError(f'Expected token {RIGHT_CURLY_BRACE_TOKEN}')
+  def parse_expression_statement(self):
+    return self.parse_expression(None, BASE_PRECEDENCE, NEWLINE_TOKEN)
   def parse_comment(self):
     # require comment
     self.require_token(COMMENT_TOKEN)
@@ -257,11 +267,15 @@ class Parser:
       self.skip_tokens(SPACE_TOKEN)
 
       # if new line - finish
-      if self.match_token(NEWLINE_TOKEN):
+      if self.match_token(NEWLINE_TOKEN) or self.is_end():
         return base_expression
     
     # skip spaces and newlines
     self.skip_tokens(SPACE_TOKEN, NEWLINE_TOKEN)
+
+    # stop if end is reached
+    if self.is_end():
+      return NullExpression()
     
     # init node tokens
     passed_tokens: list[Token] = []
@@ -457,6 +471,10 @@ class Parser:
       # move position forward
       self.increment_position()
 
+      # stop if end is reached
+      if self.is_end():
+        return
+
   # Methods to iterate through tokens list
 
   # consumes current token
@@ -492,7 +510,3 @@ class Parser:
   def load_tokens(self, tokens: list[Token]):
     self.tokens = tokens
     self.position = 0
-
-  # resetter
-  def reset_root(self):
-    self.root = BlockStatement()
