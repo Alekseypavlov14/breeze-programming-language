@@ -79,3 +79,11 @@ class GroupingApplicationExpression(Expression):
 
     self.left = left
     self.right = right
+
+# for association (hashmap) expressions
+# represents { a: 1, b: 2, c: 3 } maps
+class AssociationExpression(Expression):
+  def __init__(self, entries: list[tuple[Expression, Expression]]):
+    super().__init__()
+
+    self.entries = entries

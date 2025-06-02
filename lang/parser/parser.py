@@ -440,6 +440,33 @@ class Parser:
       # finish previous expression with passed tokens
       return self.parse_expression_from_tokens(passed_tokens)
 
+    # handle association operations
+    if is_association_operator(operator):
+      # initialize entries
+      entries: list[tuple[Exception, Exception]] = []
+
+      while not self.match_token(RIGHT_CURLY_BRACE_TOKEN):
+        # parse key expression
+        # search until association closing or colon
+        key_expression = self.parse_expression(None, BASE_PRECEDENCE, RIGHT_CURLY_BRACE_TOKEN, COLON_TOKEN)
+
+        # require and consume colon
+        self.require_token(COLON_TOKEN)
+        self.consume_current_token()
+
+        # parse value expression
+        # search until association closing or comma
+        value_expression = self.parse_expression(None, BASE_PRECEDENCE, RIGHT_CURLY_BRACE_TOKEN, COMMA_TOKEN)
+
+        # append entry
+        entries.append((key_expression, value_expression))
+      
+      # compose association
+      expression = AssociationExpression(entries)
+
+      # continue parsing
+      return self.parse_expression(expression, precedence, *terminators)
+
   # parses expression from limited set of tokens
   def parse_expression_from_tokens(self, tokens: list[Token]):
     if not len(tokens):

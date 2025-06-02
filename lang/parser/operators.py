@@ -50,6 +50,8 @@ OPERATOR_PRECEDENCE = [
   (map_keyword_to_token(NEW_KEYWORD), SuffixUnaryOperationExpression),
 
   (DOT_TOKEN, BinaryOperationExpression),
+
+  (LEFT_CURLY_BRACE_TOKEN, AssociationExpression),
 ]
 
 # get operator tokens
@@ -82,6 +84,9 @@ def is_binary_operator(operator: Token):
 
 def is_grouping_operator(operator: Token):
   return is_operator_of_class(operator, GroupingExpression)
+
+def is_association_operator(operator: Token):
+  return is_operator_of_class(operator, AssociationExpression)
 
 # receives token and class from hierarchy of expression classes
 # returns if the token is assigned to the expression class or its derived subclass
