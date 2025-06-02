@@ -70,7 +70,7 @@ class ForStatement(Statement):
 
 # defines statement of function declaration
 class FunctionDeclarationStatement(Statement):
-  def __init__(self, name: Token, params: list[Token], body: BlockStatement):
+  def __init__(self, name: Token, params: list[Expression], body: BlockStatement):
     super().__init__()
 
     self.name = name

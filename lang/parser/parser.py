@@ -40,6 +40,8 @@ class Parser:
       return self.parse_for_statement()
     if self.match_while_statement():
       return self.parse_while_statement()
+    if self.match_function_declaration_statement():
+      return self.parse_function_declaration_statement()
     if self.match_block_statement():
       return self.parse_block_statement()
 
@@ -154,7 +156,42 @@ class Parser:
 
     return WhileStatement(condition, body)
   def parse_function_declaration_statement(self):
-    pass
+    # start with function keyword
+    self.require_token(map_keyword_to_token(FUNCTION_KEYWORD))
+    self.consume_current_token()
+
+    # skip space tokens
+    # new line is not allowed here!
+    self.skip_tokens(SPACE_TOKEN)
+
+    # get name
+    self.require_token(IDENTIFIER_TOKEN)
+    name = self.consume_current_token()
+
+    # require parentheses
+    self.require_token(LEFT_PARENTHESES_TOKEN)
+    self.consume_current_token()
+
+    # get parameters
+    parameters = []
+
+    # parse parentheses expression
+    while not self.is_end() and not self.match_token(RIGHT_PARENTHESES_TOKEN):
+      parameter = self.parse_expression(None, BASE_PRECEDENCE, RIGHT_PARENTHESES_TOKEN)
+      parameters.append(parameter)
+
+    self.skip_tokens(SPACE_TOKEN, NEWLINE_TOKEN)
+
+    # require close parentheses
+    self.require_token(RIGHT_PARENTHESES_TOKEN)
+    self.consume_current_token()
+
+    self.skip_tokens(SPACE_TOKEN, NEWLINE_TOKEN)
+
+    # get body statement
+    body = self.parse_block_statement()
+
+    return FunctionDeclarationStatement(name, parameters, body)
   def parse_class_declaration_statement(self):
     pass
   def parse_block_statement(self):
