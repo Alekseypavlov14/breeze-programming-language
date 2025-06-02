@@ -22,3 +22,6 @@ class Token:
   def __str__(self):
     return f"Token ({self.type}, {self.code!r})"
   
+# checks if lexer Token class is of type by token tuple
+def is_token_of_type(token: Token, type_tuple):
+  return token.type == type_tuple[0]

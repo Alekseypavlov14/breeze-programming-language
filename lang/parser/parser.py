@@ -36,7 +36,10 @@ class Parser:
 
   # list of methods to match different statements
   # routes to other parse methods
-  def parse_statement(self):
+  def parse_statement(self, *terminators: list[Token]):
+    # skip space symbols
+    self.skip_tokens(SPACE_TOKEN, NEWLINE_TOKEN)
+
     if self.match_comment():
       return self.parse_comment()
     if self.match_condition_statement():
@@ -51,7 +54,7 @@ class Parser:
       return self.parse_block_statement()
     
     # by default, parse as expression
-    return self.parse_expression_statement()
+    return self.parse_expression_statement(*terminators)
 
   # Methods to require standalone statements
   # Require tokens. Check before
@@ -205,6 +208,8 @@ class Parser:
   def parse_block_statement(self):
     # get left curly brace
     self.require_token(LEFT_CURLY_BRACE_TOKEN)
+    self.consume_current_token()
+
     # init list of nested statements
     statements: list[Statement] = []
 
@@ -213,14 +218,18 @@ class Parser:
     while not self.is_end():
       # check if end is not reached
       if self.match_token(RIGHT_CURLY_BRACE_TOKEN):
+        # pass closing token
+        self.consume_current_token()
+
         return BlockStatement(statements)
       
       # add new statement
-      statements.append(self.parse_statement())
+      statements.append(self.parse_statement(RIGHT_CURLY_BRACE_TOKEN))
+
       
     raise ParserError(f'Expected token {RIGHT_CURLY_BRACE_TOKEN}')
-  def parse_expression_statement(self):
-    return self.parse_expression(None, BASE_PRECEDENCE, NEWLINE_TOKEN)
+  def parse_expression_statement(self, *terminators: list[Token]):
+    return self.parse_expression(None, BASE_PRECEDENCE, NEWLINE_TOKEN, *terminators)
   def parse_comment(self):
     # require comment
     self.require_token(COMMENT_TOKEN)
@@ -266,8 +275,8 @@ class Parser:
       # skip only spaces
       self.skip_tokens(SPACE_TOKEN)
 
-      # if new line - finish
-      if self.match_token(NEWLINE_TOKEN) or self.is_end():
+      # if new line or terminator - finish
+      if self.match_token(NEWLINE_TOKEN, *terminators) or self.is_end():
         return base_expression
     
     # skip spaces and newlines
@@ -431,17 +440,20 @@ class Parser:
 
   # parses expression from limited set of tokens
   def parse_expression_from_tokens(self, tokens: list[Token]):
+    if not len(tokens):
+      return NullExpression()
+
     if self.match_literal_expression(tokens):
       return LiteralExpression(tokens[0])
     if self.match_identifier_expression(tokens):
       return IdentifierExpression(tokens[0])
     
-    return ParserError('Invalid expression')
+    raise ParserError(f'Invalid expression starting with token: {tokens[0]}')
     
   def match_literal_expression(self, tokens: list[Token]):
-    return len(tokens) == LITERAL_TOKENS_LENGTH and tokens[0] in LITERAL_TOKENS
+    return len(tokens) == LITERAL_TOKENS_LENGTH and is_literal_token(tokens[0])
   def match_identifier_expression(self, tokens: list[Token]):
-    return len(tokens) == IDENTIFIER_TOKENS_LENGTH and tokens[0].type == IDENTIFIER_TOKEN[0] 
+    return len(tokens) == IDENTIFIER_TOKENS_LENGTH and is_token_of_type(tokens[0], IDENTIFIER_TOKEN)
 
   # Low level methods to parse tokens
 
@@ -458,15 +470,20 @@ class Parser:
   # checks current token. Returns bool
   # receives tokens
   def match_token(self, *tokens):
+    # handle end of module case
+    if self.is_end():
+      return False
+
     for token in tokens:
       current = self.get_current_token()
-      if current.type == token[0]: return True
+      if is_token_of_type(current, token): 
+        return True
 
     return False
   
   # to skip spaces until gets meaningful token
   def skip_tokens(self, *tokens: list[Token]):
-    # while current token is of type SPACE_TOKEN
+    # while current token is in tokens list
     while self.match_token(*tokens):
       # move position forward
       self.increment_position()
@@ -502,7 +519,7 @@ class Parser:
 
   # indicates end of token list
   def is_end(self):
-    return self.position > len(self.tokens)
+    return self.position >= len(self.tokens)
 
   # Helper methods to handle data attributes
 

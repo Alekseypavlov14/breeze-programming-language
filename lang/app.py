@@ -20,13 +20,13 @@ parser = Parser()
 # TEST 2
 code2 = """
 {
-  Hello
+  Hello = 0
 }
 {
-  Block
+  Block = 9
   {
-    Nested
-    string hello = "ABC"
+    Nested = 0
+    hello = "ABC"
   }
 }
 """
@@ -34,5 +34,6 @@ list2 = lexer.parse_module(code2)
 for token in list2:
   print(token)
 
-# print(parser.parse(lexer.parse_module(code2)))
-
+block = parser.parse(lexer.parse_module(code2))
+for statements in block.statements:
+  print(statements)
