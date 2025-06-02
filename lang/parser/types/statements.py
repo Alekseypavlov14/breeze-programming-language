@@ -1,6 +1,6 @@
 from lexer.token import Token
 from parser.types.node import Node
-from parser.types.expressions import Expression
+from parser.types.expressions import *
 
 # parent class for all statements
 # has no behavior
@@ -83,3 +83,18 @@ class ClassDeclarationStatement(Statement):
     super().__init__()
 
     self.name = name
+
+# defines import statement 
+class ImportStatement(Statement):
+  def __init__(self, path: LiteralExpression, imports: list[Expression]):
+    super().__init__()
+
+    self.path = path
+    self.imports = imports
+
+# defines export statement
+class ExportStatement(Statement):
+  def __init__(self, exports: Statement):
+    super().__init__()
+
+    self.exports = exports

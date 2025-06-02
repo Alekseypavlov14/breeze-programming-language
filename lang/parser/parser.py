@@ -50,6 +50,10 @@ class Parser:
       return self.parse_while_statement()
     if self.match_function_declaration_statement():
       return self.parse_function_declaration_statement()
+    if self.match_import_statement():
+      self.parse_import_statement()
+    if self.match_export_statement():
+      self.parse_export_statement()
     if self.match_block_statement():
       return self.parse_block_statement()
     
@@ -205,6 +209,42 @@ class Parser:
     return FunctionDeclarationStatement(name, parameters, body)
   def parse_class_declaration_statement(self):
     pass
+  def parse_import_statement(self):
+    # get IMPORT token
+    self.require_token(map_keyword_to_token(IMPORT_KEYWORD))
+    self.consume_current_token()
+
+    # skip spaces
+    self.skip_tokens(SPACE_TOKEN)
+
+    # parse curly brace block statements
+    block = self.parse_block_statement()
+    # get imports
+    imports = block.statements
+
+    # skip spaces
+    self.skip_tokens(SPACE_TOKEN)
+
+    # get FROM keyword
+    self.require_token(map_keyword_to_token(FROM_KEYWORD))
+    self.consume_current_token()
+
+    # parse from content
+    path = self.parse_expression(None, BASE_PRECEDENCE, NEWLINE_TOKEN)
+
+    # return import statement
+    return ImportStatement(path, imports)
+  def parse_export_statement(self):
+    # require EXPORT keyword
+    self.require_token(map_keyword_to_token(EXPORT_KEYWORD))
+    self.consume_current_token()
+
+    self.skip_tokens(SPACE_TOKEN)
+
+    # get export statement
+    exports = self.parse_statement(NEWLINE_TOKEN)
+
+    return ExportStatement(exports)
   def parse_block_statement(self):
     # get left curly brace
     self.require_token(LEFT_CURLY_BRACE_TOKEN)
@@ -251,6 +291,10 @@ class Parser:
     return self.match_token(map_keyword_to_token(FUNCTION_KEYWORD))
   def match_class_declaration_statement(self):
     return self.match_token(map_keyword_to_token(CLASS_KEYWORD))
+  def match_import_statement(self):
+    return self.match_token(map_keyword_to_token(IMPORT_KEYWORD))
+  def match_export_statement(self):
+    return self.match_token(map_keyword_to_token(EXPORT_KEYWORD))
   def match_block_statement(self):
     return self.match_token(LEFT_CURLY_BRACE_TOKEN)
   def match_comment(self):
