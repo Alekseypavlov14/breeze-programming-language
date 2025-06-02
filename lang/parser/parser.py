@@ -31,8 +31,10 @@ class Parser:
   # list of methods to match different statements
   # routes to other parse methods
   def parse_statement(self):
-    if self.match_condition_statement():
+    if self.match_comment():
       return self.parse_comment()
+    if self.match_condition_statement():
+      return self.parse_condition_statement()
     if self.match_block_statement():
       return self.parse_block_statement()
 
@@ -40,7 +42,50 @@ class Parser:
   # Require tokens. Check before
 
   def parse_condition_statement(self):
-    pass
+    # start with IF keyword
+    self.require_token(map_keyword_to_token(IF_KEYWORD))
+    self.consume_current_token()
+
+    # skip space tokens
+    # new line is not allowed here!
+    self.skip_tokens(SPACE_TOKEN)
+
+    # require parentheses
+    self.require_token(LEFT_PARENTHESES_TOKEN)
+    self.consume_current_token()
+
+    # parse parentheses expression
+    while not self.is_end() and not self.match_token(LEFT_PARENTHESES_TOKEN):
+      condition = self.parse_expression(None, BASE_PRECEDENCE, RIGHT_PARENTHESES_TOKEN)
+
+    self.skip_tokens(SPACE_TOKEN, NEWLINE_TOKEN)
+
+    # require close parentheses
+    self.require_token(RIGHT_PARENTHESES_TOKEN)
+    self.consume_current_token()
+
+    self.skip_tokens(SPACE_TOKEN, NEWLINE_TOKEN)
+
+    # get THEN statement
+    then_branch = self.parse_statement()
+
+    self.skip_tokens(SPACE_TOKEN, NEWLINE_TOKEN)
+
+    # init ELSE statement
+    else_branch = None
+
+    # init ELSE statement
+    if self.match_token(map_keyword_to_token(ELSE_KEYWORD)):
+      # consume else keyword
+      self.consume_current_token()
+
+      self.skip_tokens(SPACE_TOKEN)
+
+      # get ELSE statement
+      else_branch = self.parse_statement()
+
+    # return condition statement
+    return ConditionStatement(condition, then_branch, else_branch)
   def parse_for_statement(self):
     pass
   def parse_while_statement(self):
