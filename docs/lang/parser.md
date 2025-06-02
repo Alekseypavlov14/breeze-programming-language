@@ -18,7 +18,24 @@ Parser methods are built on two basic methods: match_token and require_token
 **match_token** returns bool for current token match and does not move position pointer
 **require_token** returns found token and raises exception if it is not received (spaces are skipped)
 
-(TODO)
+There are other methods to get tokens and move pointer but they are utilities
+
+## Recursive parsing
+
+Parsing starts with defining root statement (block of statements, equivalent of {})
+Then, skipping spaces, each statement is parsed. 
+
+If the statement is a standard one (condition, loop, function declaration etc.), it is parsed separately. 
+
+All other statements (computations, assignments, function calls) are considered **expression statement** (statement that contains single expression). Expression is a part of code that can be evaluated and have side effect. 
+Examples of statements:
+- `a + b`
+- `print()`
+- `[ a, b, c ]`
+
+Expressions can be **unary**, **binary** and **grouping** (for brackets). Expressions are parsed until specified separator (usually NEWLINE) and parser recursively generates tree of operations based on their **precedence**. 
+
+Expressions cannot follow each other in the same AST node without operator between them.
 
 ## Exceptions
 - ParserError - is raised when required token is not present

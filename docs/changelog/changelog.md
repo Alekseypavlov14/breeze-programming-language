@@ -1,2 +1,3 @@
+- 02.06.2025 - Finished statement parsing in Parser
 - 01.06.2025 - Added Expression parsing in Parser
 - 29.05.2025 - Created lexer (parse code to tokens set)
