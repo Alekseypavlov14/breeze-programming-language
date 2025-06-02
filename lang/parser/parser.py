@@ -96,22 +96,42 @@ class Parser:
   # Methods to parse expressions
 
   # parses expression node
+  # base_expression is used to continue parsing after UNARY operations and GROUPINGS
   # base_precedence specifies the precedence of previous expression to form a hierarchy
   # specify tokens after which search stops
   # composes AST and bases on parse_expression_from_tokens method
-  def parse_expression(self, base_precedence: int, *terminators: list[Token]):
-    # skip space symbols
-    self.skip_tokens(SPACE_TOKEN, NEWLINE_TOKEN)
+  def parse_expression(
+    self, 
+    base_expression: Expression | None, # contains node of currently parsing expression
+    base_precedence: int, # contains precedence of previous operator to handle hierarchy
+    *terminators: list[Token] # list of tokens that end expression if it is ready
+  ):
+    # handle if base expression is finished
+    if base_expression:
+      # skip only spaces
+      self.skip_tokens(SPACE_TOKEN)
 
+      # if new line - finish
+      if self.match_token(NEWLINE_TOKEN):
+        return base_expression
+    
+    # skip spaces and newlines
+    self.skip_tokens(SPACE_TOKEN, NEWLINE_TOKEN)
+    
     # init node tokens
     passed_tokens: list[Token] = []
-
+    
     # go until operators
     while not self.is_end() and not self.match_token(*OPERATOR_TOKENS):
-      # append tokens to branch
+      # if base_expression is followed by non-operator tokens - error in composition
+      if base_expression:
+        raise ParserError('Invalid expression')
+      
+      # append tokens to list
       passed_tokens.append(self.consume_current_token())
 
       # check if terminators are not reached
+      # when reach terminator, finish expression parsing
       if self.match_token(*terminators):
         return self.parse_expression_from_tokens(passed_tokens)
 
@@ -120,35 +140,82 @@ class Parser:
     precedence = get_operator_precedence(operator)
 
     # handle unary operations
-    # TODO: handle prefix and suffix forms
     if is_unary_operator(operator):
       # handle case if current operator has higher precedence
+      # higher precedence - work with this expression
       if base_precedence <= precedence:
-        # if no tokens - prefix operator
-        if not len(passed_tokens):
-          operand = self.parse_expression(precedence, *terminators)
-          return UnaryOperationExpression(operator, operand)
+        # if passed_tokens are present - suffix operator
+        if base_expression or len(passed_tokens):
+          # if there are tokens - suffix operator
+          if not is_suffix_unary_operator(operator) and not is_affix_unary_operator(operator):
+            raise ParserError('Prefix operator is used in suffix form')
         
-        # if tokens are present - suffix operator
-        operand = self.parse_expression_from_tokens(passed_tokens)
-        return UnaryOperationExpression(operator, operand)
+          # if operand is base_expression
+          operand = base_expression
+          # if operand is made of passed tokens
+          if len(passed_tokens):
+            operand = self.parse_expression_from_tokens(passed_tokens)
+
+          # compose expression
+          expression = SuffixUnaryOperationExpression(operator, operand)
+          
+          # pass this expression for further parsing
+          return self.parse_expression(expression, precedence, *terminators)
+
+        # if no tokens and no base expression - prefix operator
+        # validate operator
+        if not is_prefix_unary_operator(operator) and not is_affix_unary_operator(operator):
+          raise ParserError('Suffix operator is used in prefix form')
+        
+        # no base expression because no tokens, started with operator
+        operand = self.parse_expression(None, precedence, *terminators)
+        expression = PrefixUnaryOperationExpression(operator, operand)
+
+        # use this expression as base and continue parsing
+        return self.parse_expression(expression, precedence, *terminators)
       
-      # if this operator has smaller precedence, finish previous expression and analyse operator after
-      self.decrement_position() # to "give operator back"
-      # finish previous expression
+      # if this operator has smaller precedence:
+      # finish previous expression and analyse operator after
+      
+      # to "give operator back"
+      self.decrement_position()
+
+      # return base expression if it is 
+      if base_expression: 
+        return base_expression
+      
+      # finish previous expression with passed tokens
       return self.parse_expression_from_tokens(passed_tokens)
 
     # handle binary operations
     if is_binary_operator(operator):
       # if found operation precedence is smaller than or equal to, current tokens is its left branch
-      if base_precedence <= precedence:
-        left_branch = self.parse_expression_from_tokens(passed_tokens)
-        right_branch = self.parse_expression(precedence, *terminators)
-        return BinaryOperationExpression(operator, left_branch, right_branch)
+      if base_precedence < precedence:
+        # if left_branch is base_expression
+        left_branch = base_expression
+        # override with passed tokens if needed
+        if len(passed_tokens):
+          left_branch = self.parse_expression_from_tokens(passed_tokens)
+
+        right_branch = self.parse_expression(None, precedence, *terminators)
+        
+        # compose expression
+        expression = BinaryOperationExpression(operator, left_branch, right_branch)
+
+        # use this expression as base one
+        return self.parse_expression(expression, precedence, *terminators)
       
-      # if found operation precedence is higher - finish previous expression first
-      self.decrement_position() # to "give operator back"
-      # finish previous expression
+      # if found operation precedence is higher:
+      # finish previous expression first
+      
+      # to "give operator back"
+      self.decrement_position()
+
+      # return base expression if it is 
+      if base_expression: 
+        return base_expression
+      
+      # finish previous expression with passed tokens
       return self.parse_expression_from_tokens(passed_tokens)
     
     # handle grouping operations
@@ -167,25 +234,40 @@ class Parser:
       # parse expressions until reach closing operator
       while not self.match_token(closing_operator):
         # add found expression
-        expressions.append(self.parse_expression(BASE_PRECEDENCE, grouping_terminators))
+        expressions.append(self.parse_expression(None, BASE_PRECEDENCE, grouping_terminators))
 
       # compose grouping expression
       grouping_expression = GroupingExpression(operator, expressions)
 
       # if grouping precedence is higher, return grouping or grouping application
-      if base_precedence <= precedence:
-        # if no previously passed tokens - return expression
-        if not len(passed_tokens):
+      if base_precedence < precedence:
+        # if no previously passed tokens or base_expression - return expression
+        if not base_expression and not len(passed_tokens):
           return grouping_expression
 
+        # use base expression as left by default
+        left = base_expression
         # if previous tokens are present - compute expression
-        left = self.parse_expression_from_tokens(passed_tokens)
-        return GroupingApplicationExpression(left, grouping_expression)
+        if len(passed_tokens):
+          left = self.parse_expression_from_tokens(passed_tokens)
+        
+        # compose expression
+        expression = GroupingApplicationExpression(left, grouping_expression)
+        
+        # use expression as base for further parsing 
+        return self.parse_expression(expression, precedence, *terminators)
       
-      # handle case when previous operation had higher precedence
-      # return back all passed tokens for grouping. Parse them after
+      # if found operation precedence is higher:
+      # finish previous expression first
+      
+      # to "give operator back"
       self.position = position_before_grouping_operator
-      # finish previous expression
+
+      # return base expression if it is 
+      if base_expression: 
+        return base_expression
+      
+      # finish previous expression with passed tokens
       return self.parse_expression_from_tokens(passed_tokens)
 
   # parses expression from limited set of tokens
@@ -194,6 +276,8 @@ class Parser:
       return LiteralExpression(tokens[0])
     if self.match_identifier_expression(tokens):
       return IdentifierExpression(tokens[0])
+    
+    return ParserError('Invalid expression')
     
   def match_literal_expression(self, tokens: list[Token]):
     return len(tokens) == 1 and tokens[0] in LITERAL_TOKENS
