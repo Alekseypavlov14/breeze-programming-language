@@ -226,7 +226,6 @@ class Parser:
       # add new statement
       statements.append(self.parse_statement(RIGHT_CURLY_BRACE_TOKEN))
 
-      
     raise ParserError(f'Expected token {RIGHT_CURLY_BRACE_TOKEN}')
   def parse_expression_statement(self, *terminators: list[Token]):
     return self.parse_expression(None, BASE_PRECEDENCE, NEWLINE_TOKEN, *terminators)
@@ -295,13 +294,13 @@ class Parser:
       if base_expression:
         raise ParserError('Invalid expression')
       
-      # append tokens to list
-      passed_tokens.append(self.consume_current_token())
-
       # check if terminators are not reached
       # when reach terminator, finish expression parsing
       if self.match_token(*terminators):
         return self.parse_expression_from_tokens(passed_tokens)
+      
+      # append tokens to list
+      passed_tokens.append(self.consume_current_token())
 
     # get found operator. Consume and move position
     operator = self.consume_current_token()
