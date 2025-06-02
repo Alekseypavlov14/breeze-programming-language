@@ -302,6 +302,9 @@ class Parser:
       # append tokens to list
       passed_tokens.append(self.consume_current_token())
 
+      # skip spaces again
+      self.skip_tokens(SPACE_TOKEN)
+
     # get found operator. Consume and move position
     operator = self.consume_current_token()
     precedence = get_operator_precedence(operator)
