@@ -1,6 +1,7 @@
 from parser.types.statements import *
 from parser.types.expressions import *
 from parser.exceptions import *
+from parser.constants import *
 from parser.operators import *
 from parser.tokens import *
 
@@ -35,6 +36,8 @@ class Parser:
       return self.parse_comment()
     if self.match_condition_statement():
       return self.parse_condition_statement()
+    if self.match_for_statement():
+      return self.parse_for_statement()
     if self.match_block_statement():
       return self.parse_block_statement()
 
@@ -55,7 +58,7 @@ class Parser:
     self.consume_current_token()
 
     # parse parentheses expression
-    while not self.is_end() and not self.match_token(LEFT_PARENTHESES_TOKEN):
+    while not self.is_end() and not self.match_token(RIGHT_PARENTHESES_TOKEN):
       condition = self.parse_expression(None, BASE_PRECEDENCE, RIGHT_PARENTHESES_TOKEN)
 
     self.skip_tokens(SPACE_TOKEN, NEWLINE_TOKEN)
@@ -87,7 +90,38 @@ class Parser:
     # return condition statement
     return ConditionStatement(condition, then_branch, else_branch)
   def parse_for_statement(self):
-    pass
+    # get FOR keyword
+    self.require_token(map_keyword_to_token(FOR_KEYWORD))
+    self.consume_current_token()
+
+    # newlines are not allowed
+    self.skip_tokens(SPACE_TOKEN)
+
+    # require parentheses
+    self.require_token(LEFT_PARENTHESES_TOKEN)
+    self.consume_current_token()
+
+    # init inner expressions
+    expressions = []
+
+    # parse parentheses expression
+    while not self.is_end() and not self.match_token(RIGHT_PARENTHESES_TOKEN):
+      expression = self.parse_expression(None, BASE_PRECEDENCE, [RIGHT_PARENTHESES_TOKEN, SEMICOLON_TOKEN])
+      expressions.append(expression)
+
+    # validate parentheses expressions
+    if len(expressions) != FOR_EXPRESSION_LENGTH:
+      raise ParserError('Invalid FOR loop expressions')
+    
+    # get parts of expressions
+    initialization, condition, increment = expressions
+
+    self.skip_tokens(SPACE_TOKEN, NEWLINE_TOKEN)
+
+    # get loop body
+    body = self.parse_statement()
+
+    return ForStatement(initialization, condition, increment, body)
   def parse_while_statement(self):
     pass
   def parse_function_declaration_statement(self):
@@ -325,9 +359,9 @@ class Parser:
     return ParserError('Invalid expression')
     
   def match_literal_expression(self, tokens: list[Token]):
-    return len(tokens) == 1 and tokens[0] in LITERAL_TOKENS
+    return len(tokens) == LITERAL_TOKENS_LENGTH and tokens[0] in LITERAL_TOKENS
   def match_identifier_expression(self, tokens: list[Token]):
-    return len(tokens) == 1 and tokens[0].type == IDENTIFIER_TOKEN[0] 
+    return len(tokens) == IDENTIFIER_TOKENS_LENGTH and tokens[0].type == IDENTIFIER_TOKEN[0] 
 
   # Low level methods to parse tokens
 
