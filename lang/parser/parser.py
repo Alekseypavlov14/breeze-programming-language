@@ -42,6 +42,10 @@ class Parser:
 
     if self.match_comment():
       return self.parse_comment()
+    if self.match_variable_declaration():
+      return self.parse_variable_declaration()
+    if self.match_constant_declaration():
+      return self.parse_constant_declaration()
     if self.match_condition_statement():
       return self.parse_condition_statement()
     if self.match_for_statement():
@@ -50,10 +54,12 @@ class Parser:
       return self.parse_while_statement()
     if self.match_function_declaration_statement():
       return self.parse_function_declaration_statement()
+    if self.match_return_statement():
+      return self.parse_return_statement()
     if self.match_import_statement():
-      self.parse_import_statement()
+      return self.parse_import_statement()
     if self.match_export_statement():
-      self.parse_export_statement()
+      return self.parse_export_statement()
     if self.match_block_statement():
       return self.parse_block_statement()
     
@@ -63,6 +69,60 @@ class Parser:
   # Methods to require standalone statements
   # Require tokens. Check before
 
+  def parse_variable_declaration(self):
+    # require VAR keyword
+    self.require_token(map_keyword_to_token(VAR_KEYWORD))
+    self.consume_current_token()
+
+    self.skip_tokens(SPACE_TOKEN)
+
+    # get VAR name
+    self.require_token(IDENTIFIER_TOKEN)
+    identifier = self.consume_current_token()
+
+    self.skip_tokens(SPACE_TOKEN)
+
+    # if no assignment on this line - return uninitialized
+    if self.match_token(NEWLINE_TOKEN):
+      return VariableDeclarationStatement(identifier, NullExpression())
+    
+    # if ASSIGN is present - parse expression
+    if self.match_token(ASSIGN_TOKEN):
+      # consume assign token
+      self.consume_current_token()
+
+      self.skip_tokens(SPACE_TOKEN)
+
+      expression = self.parse_expression(None, BASE_PRECEDENCE, NEWLINE_TOKEN)
+      return VariableDeclarationStatement(identifier, expression)
+    
+    # if other symbol - raise error
+    raise ParserError('Invalid variable declaration')
+  def parse_constant_declaration(self):
+     # require CONST keyword
+    self.require_token(map_keyword_to_token(CONST_KEYWORD))
+    self.consume_current_token()
+
+    self.skip_tokens(SPACE_TOKEN)
+
+    # get CONST name
+    self.require_token(IDENTIFIER_TOKEN)
+    identifier = self.consume_current_token()
+
+    self.skip_tokens(SPACE_TOKEN)
+
+    # require ASSIGNMENT
+    if not self.match_token(ASSIGN_TOKEN):
+      raise ParserError('Constant declaration without initialization')
+    
+    # consume ASSIGNMENT
+    self.require_token(ASSIGN_TOKEN)
+    self.consume_current_token()
+
+    self.skip_tokens(SPACE_TOKEN)
+
+    initialization = self.parse_expression(None, BASE_PRECEDENCE, NEWLINE_TOKEN)
+    return ConstantDeclarationStatement(identifier, initialization)
   def parse_condition_statement(self):
     # start with IF keyword
     self.require_token(map_keyword_to_token(IF_KEYWORD))
@@ -207,6 +267,16 @@ class Parser:
     body = self.parse_block_statement()
 
     return FunctionDeclarationStatement(name, parameters, body)
+  def parse_return_statement(self):
+    # require return
+    self.require_token(map_keyword_to_token(RETURN_KEYWORD))
+    self.consume_current_token()
+
+    self.skip_tokens(SPACE_TOKEN)
+
+    # compose return statement
+    expression = self.parse_expression(None, BASE_PRECEDENCE, NEWLINE_TOKEN)
+    return ReturnStatement(expression)
   def parse_class_declaration_statement(self):
     pass
   def parse_import_statement(self):
@@ -281,6 +351,10 @@ class Parser:
   # Methods to check statements (without requiring)
   # check if current statement is of type
 
+  def match_variable_declaration(self):
+    return self.match_token(map_keyword_to_token(VAR_KEYWORD))
+  def match_constant_declaration(self):
+    return self.match_token(map_keyword_to_token(CONST_KEYWORD))
   def match_condition_statement(self):
     return self.match_token(map_keyword_to_token(IF_KEYWORD))
   def match_for_statement(self):
@@ -289,6 +363,8 @@ class Parser:
     return self.match_token(map_keyword_to_token(WHILE_KEYWORD))
   def match_function_declaration_statement(self):
     return self.match_token(map_keyword_to_token(FUNCTION_KEYWORD))
+  def match_return_statement(self):
+    return self.match_token(map_keyword_to_token(RETURN_KEYWORD))
   def match_class_declaration_statement(self):
     return self.match_token(map_keyword_to_token(CLASS_KEYWORD))
   def match_import_statement(self):

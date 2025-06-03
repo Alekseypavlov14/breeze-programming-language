@@ -23,22 +23,20 @@ class BlockStatement(Statement):
 
 # defines statement of variable declaration
 # can be used without initialization
-# type is required
 class VariableDeclarationStatement(Statement):
-  def __init__(self, type: Expression, name: Token):
+  def __init__(self, name: Token, initialization: Expression):
     super().__init__()
 
-    self.type = type
     self.name = name
+    self.initialization = initialization
 
 # defines statement for constant declaration
-# type is required
 class ConstantDeclarationStatement(Statement):
-  def __init__(self, type: Expression, name: Token):
+  def __init__(self, name: Token, initialization: Expression):
     super().__init__()
 
-    self.type = type
     self.name = name
+    self.initialization = initialization
 
 # defines statement for if/else
 # statement for branches allow using single line branches and "else if"
@@ -76,6 +74,13 @@ class FunctionDeclarationStatement(Statement):
     self.name = name
     self.params = params
     self.body = body
+
+# defines return statement
+class ReturnStatement(Statement):
+  def __init__(self, returns: Expression):
+    super().__init__()
+
+    self.returns = returns
 
 # defines class statement
 class ClassDeclarationStatement(Statement):
