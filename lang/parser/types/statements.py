@@ -66,6 +66,16 @@ class ForStatement(Statement):
     self.increment = increment
     self.body = body
 
+# define break statement
+class BreakStatement(Statement):
+  def __init__(self):
+    super().__init__()
+
+# define continue statement
+class ContinueStatement(Statement):
+  def __init__(self):
+    super().__init__()
+
 # defines statement of function declaration
 class FunctionDeclarationStatement(Statement):
   def __init__(self, name: Token, params: list[Expression], body: BlockStatement):

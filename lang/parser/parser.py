@@ -230,6 +230,18 @@ class Parser:
     body = self.parse_statement()
 
     return WhileStatement(condition, body)
+  def parse_break_statement(self):
+    # require break keyword
+    self.require_token(map_keyword_to_token(BREAK_KEYWORD))
+    self.consume_current_token()
+
+    return BreakStatement()
+  def parse_continue_statement(self):
+    # require continue keyword
+    self.require_token(map_keyword_to_token(CONTINUE_KEYWORD))
+    self.consume_current_token()
+
+    return ContinueStatement()
   def parse_function_declaration_statement(self):
     # start with function keyword
     self.require_token(map_keyword_to_token(FUNCTION_KEYWORD))
@@ -361,6 +373,10 @@ class Parser:
     return self.match_token(map_keyword_to_token(FOR_KEYWORD))
   def match_while_statement(self):
     return self.match_token(map_keyword_to_token(WHILE_KEYWORD))
+  def match_break_statement(self):
+    return self.match_token(map_keyword_to_token(BREAK_KEYWORD))
+  def match_continue_statement(self):
+    return self.match_token(map_keyword_to_token(CONTINUE_KEYWORD))
   def match_function_declaration_statement(self):
     return self.match_token(map_keyword_to_token(FUNCTION_KEYWORD))
   def match_return_statement(self):
