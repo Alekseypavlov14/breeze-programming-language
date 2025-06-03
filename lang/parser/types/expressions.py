@@ -87,3 +87,8 @@ class AssociationExpression(Expression):
     super().__init__()
 
     self.entries = entries
+
+
+# util to check if expression is of one of specified expressions
+def is_expression_of_class(expression: Expression, *expressions: list[Expression]):
+  return isinstance(expression, tuple(expressions))

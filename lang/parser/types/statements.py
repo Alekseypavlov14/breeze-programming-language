@@ -113,3 +113,8 @@ class ExportStatement(Statement):
     super().__init__()
 
     self.exports = exports
+
+
+# utils to check if statement belongs to one specified classes
+def is_statement_of_class(statement, *statements: list[Statement]):
+  return isinstance(statement, tuple(statements))
