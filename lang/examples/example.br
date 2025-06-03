@@ -1,12 +1,10 @@
-// import
-import console
 // import of code module
 import { externalFunction } from "./example2.br"
 
 // function definition
 function hello() {
-  vector<int> list
-  int a = 9
+  const list = []
+  var a = 9
   return a
 }
 
