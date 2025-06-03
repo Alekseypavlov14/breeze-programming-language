@@ -3,7 +3,7 @@ from parser.types.statements import BlockStatement
 # this class represents independent module of the app
 # modules are files
 
-# path - path to the module
+# path - path to the module (can be used as ID)
 # content - parsed AST of the module
 # dependencies - modules that the current module depend on
 class Module:
