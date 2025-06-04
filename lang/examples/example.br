@@ -1,5 +1,5 @@
 // import of code module
-import { externalFunction } from "./example2.br"
+// import { externalFunction } from "./example2.br"
 
 // function definition
 function hello() {

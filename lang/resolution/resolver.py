@@ -37,7 +37,7 @@ class Resolver:
 
       # if this module is analyzing - Circular Dependency
       if path in analyzing_paths:
-        raise (f'Circular dependency including module by path {path}')
+        raise ResolutionError(f'Circular dependency including module by path {path}')
 
       # get module and dependencies
       module = self.get_module_by_absolute_path(path)
