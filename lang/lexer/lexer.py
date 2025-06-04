@@ -26,8 +26,19 @@ class Lexer:
         match = re.search(f"^{regex}", code[position:])
       
         if match:
-          # get token value
+          # get whole match value
           token = match.group()
+          
+          # move position
+          position += len(token)
+
+          # handle extracting part of token for .code field
+          # used to extract string content from string literal
+          if match.groups():
+            for group in match.groups():
+              if group:
+                token = group
+                break
 
           # handle keywords
           if type == IDENTIFIER_TOKEN[0] and token in KEYWORDS:
@@ -36,9 +47,6 @@ class Lexer:
 
           # add token
           tokens.append(Token(type, token))
-
-          # move position
-          position += len(token)
 
           # update flag to set current position matched
           current_position_match = True

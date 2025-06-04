@@ -26,7 +26,7 @@ code2 = """
   Block = 9
   {
     Nested = 0
-    hello = "ABC"
+    hello = "ABC \n DEF"
   }
 }
 """
