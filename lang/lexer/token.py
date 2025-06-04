@@ -1,4 +1,5 @@
 from shared.tokens import TOKEN_NAMES
+from shared.keywords import KEYWORDS
 from lexer.exceptions import LexerError
 
 # token - standalone part of code
@@ -14,7 +15,7 @@ class Token:
   
   @type.setter
   def type(self, type):
-    if type not in TOKEN_NAMES:
+    if type not in TOKEN_NAMES and type not in KEYWORDS:
       raise LexerError(f'Token "{self.code}" has invalid type: {type}')
     self._type = type
 

@@ -355,10 +355,16 @@ class Parser:
     # require comment
     self.require_token(COMMENT_TOKEN)
 
-    # skip symbols and stop after consuming new line
+    # consume tokens until NEWLINE is not found
     while not self.is_end():
-      if self.consume_current_token() == NEWLINE_TOKEN:
+      if not self.match_token(NEWLINE_TOKEN):
+        self.consume_current_token()
         break
+
+    # consume NEWLINE
+    self.consume_current_token()
+    
+    return NullExpression()
 
   # Methods to check statements (without requiring)
   # check if current statement is of type
