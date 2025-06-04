@@ -357,8 +357,11 @@ class Parser:
 
     # consume tokens until NEWLINE is not found
     while not self.is_end():
-      if not self.match_token(NEWLINE_TOKEN):
-        self.consume_current_token()
+      # consume token
+      self.consume_current_token()
+
+      # if next one is NEWLINE - stop
+      if self.match_token(NEWLINE_TOKEN):
         break
 
     # consume NEWLINE
@@ -420,11 +423,11 @@ class Parser:
       if self.match_token(NEWLINE_TOKEN, *terminators) or self.is_end():
         return base_expression
     
-    # skip spaces and newlines
+    # skip spaces and newlines (expressions can take several lines if needed)
     self.skip_tokens(SPACE_TOKEN, NEWLINE_TOKEN)
 
-    # stop if end is reached
-    if self.is_end():
+    # stop if end or terminator is reached
+    if self.is_end() or self.match_token(*terminators):
       return NullExpression()
     
     # init node tokens
@@ -546,7 +549,10 @@ class Parser:
       # parse expressions until reach closing operator
       while not self.match_token(closing_operator):
         # add found expression
-        expressions.append(self.parse_expression(None, BASE_PRECEDENCE, grouping_terminators))
+        expressions.append(self.parse_expression(None, BASE_PRECEDENCE, *grouping_terminators))
+
+      # consume closing token
+      self.consume_current_token()
 
       # compose grouping expression
       grouping_expression = GroupingExpression(operator, expressions)
@@ -631,12 +637,11 @@ class Parser:
   # asserts current token. Raises error
   # receives tokens
   def require_token(self, token):
-    # skip spaces
-    self.skip_tokens(SPACE_TOKEN, NEWLINE_TOKEN)
+    current = self.get_current_token()
 
     # validate token type
     if not self.match_token(token):
-      raise ParserError(f'Expected token {token}')
+      raise ParserError(f'Expected token {token}. Received {current}')
     
   # checks current token. Returns bool
   # receives tokens
@@ -645,8 +650,10 @@ class Parser:
     if self.is_end():
       return False
 
+    # receive current token
+    current = self.get_current_token()
+
     for token in tokens:
-      current = self.get_current_token()
       if is_token_of_type(current, token): 
         return True
 

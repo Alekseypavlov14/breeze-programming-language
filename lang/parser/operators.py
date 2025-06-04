@@ -1,4 +1,5 @@
 from parser.types.expressions import *
+from lexer.token import *
 from shared.tokens import *
 from shared.keywords import *
 
@@ -93,8 +94,7 @@ def is_association_operator(operator: Token):
 def is_operator_of_class(operator: Token, expression_class):
   # iterate through operators
   for token, token_class in OPERATOR_PRECEDENCE:
-    if operator == token:
-      # check if it is a unary operator
+    if is_token_of_type(operator, token):
       return inspect.isclass(expression_class) and issubclass(token_class, expression_class)
   
   # return False if not found
@@ -109,7 +109,7 @@ GROUPING_OPERATOR_CLOSING_TOKENS = [
 # util to get closing token by opening token
 def get_grouping_operator_closing_token(operator: Token):
   for opening, closing in GROUPING_OPERATOR_CLOSING_TOKENS:
-    if opening == operator:
+    if is_token_of_type(operator, opening):
       return closing
     
   # fallback

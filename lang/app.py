@@ -1,39 +1,24 @@
 from lexer.lexer import Lexer
 from parser.parser import Parser
+from resolution.resolver import Resolver
 
 # THIS CODE IS TEST
+
+resolver = Resolver()
+
+path = "C:/Users/User/Desktop/programming language/lang/examples/example.br"
+resolver.resolve_modules(path)
+
+content = resolver.get_module_content_by_absolute_path(path)
+print(content)
 
 lexer = Lexer()
 parser = Parser()
 
-# TEST 1
-# code = """
-# function a() {}
-# float a = 88.9
-# string b = "hello"
-# """
-# list = lexer.parse_module(code)
+st = parser.parse(lexer.parse_module(content))
+print(st.statements)
 
-# for token in list:
-#   print(token)
-
-# TEST 2
-code2 = """
-{
-  Hello = 0
-}
-{
-  Block = 9
-  {
-    Nested = 0
-    hello = "ABC \n DEF"
-  }
-}
-"""
-list2 = lexer.parse_module(code2)
-for token in list2:
-  print(token)
-
-block = parser.parse(lexer.parse_module(code2))
-for statements in block.statements:
-  print(statements)
+modules = resolver.sort_modules()
+for module in modules:
+  for statement in module.content.statements:
+    print(statement)
