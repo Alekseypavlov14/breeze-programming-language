@@ -14,9 +14,9 @@ if (0 < 1) {
 }
 
 // loop
-for (var i = 0; i < 9; i++) {
-  console.print(i)
-}
+// for (var i = 1000; i < 9; i++) {
+//  console.print(i)
+// }
 
 // variable
 var c = "hello"

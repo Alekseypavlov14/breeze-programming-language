@@ -180,21 +180,40 @@ class Parser:
     self.require_token(LEFT_PARENTHESES_TOKEN)
     self.consume_current_token()
 
-    # init inner expressions
-    expressions = []
+    # skip spaces and newlines
+    self.skip_tokens(SPACE_TOKEN, NEWLINE_TOKEN)
 
-    # parse parentheses expression
-    while not self.is_end() and not self.match_token(RIGHT_PARENTHESES_TOKEN):
-      expression = self.parse_expression(None, BASE_PRECEDENCE, [RIGHT_PARENTHESES_TOKEN, SEMICOLON_TOKEN])
-      expressions.append(expression)
+    # get initialization statement
+    initialization = self.parse_statement(RIGHT_PARENTHESES_TOKEN, SEMICOLON_TOKEN)
 
-    # validate parentheses expressions
-    if len(expressions) != FOR_EXPRESSION_LENGTH:
-      raise ParserError('Invalid FOR loop expressions')
-    
-    # get parts of expressions
-    initialization, condition, increment = expressions
+    # consume semicolon
+    self.require_token(SEMICOLON_TOKEN)
+    self.consume_current_token()
 
+    # skip spaces and newlines
+    self.skip_tokens(SPACE_TOKEN, NEWLINE_TOKEN)
+
+    # get condition expression
+    condition = self.parse_expression(None, BASE_PRECEDENCE, RIGHT_PARENTHESES_TOKEN, SEMICOLON_TOKEN)
+
+    # consume semicolon
+    self.require_token(SEMICOLON_TOKEN)
+    self.consume_current_token()
+
+    # skip spaces and newlines
+    self.skip_tokens(SPACE_TOKEN, NEWLINE_TOKEN)
+
+    # get increment expression
+    increment = self.parse_expression(None, BASE_PRECEDENCE, RIGHT_PARENTHESES_TOKEN, SEMICOLON_TOKEN)
+
+    # skip spaces
+    self.skip_tokens(SPACE_TOKEN, NEWLINE_TOKEN)
+
+    # consume right parentheses
+    self.require_token(RIGHT_PARENTHESES_TOKEN)
+    self.consume_current_token()
+
+    # skip spaces and newlines
     self.skip_tokens(SPACE_TOKEN, NEWLINE_TOKEN)
 
     # get loop body
@@ -624,6 +643,9 @@ class Parser:
       return LiteralExpression(tokens[0])
     if self.match_identifier_expression(tokens):
       return IdentifierExpression(tokens[0])
+    
+    for token in tokens:
+      print(token)
     
     raise ParserError(f'Invalid expression starting with token: {tokens[0]}')
     

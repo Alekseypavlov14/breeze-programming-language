@@ -129,8 +129,8 @@ class Resolver:
   # allows to get absolute path of dependency module
   # base_path represents the ABSOLUTE path of dependent module (importer)
   # path represents the RELATIVE path to dependency module (exporter)
-  def resolve_absolute_path(base_path: str, path: str) -> str:
-    base_directory = os.path.dirname(base_directory)
+  def resolve_absolute_path(self, base_path: str, path: str) -> str:
+    base_directory = os.path.dirname(base_path)
     dependency_path = os.path.join(base_directory, path)
     # returns resolved absolute path without symbolic links
     return os.path.realpath(dependency_path)

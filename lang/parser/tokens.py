@@ -9,8 +9,8 @@ LITERAL_TOKENS = [
 
 # use to check if token is literal
 def is_literal_token(token: Token):
-  for name, regex in LITERAL_TOKENS:
-    if token.type == name:
+  for literal_token in LITERAL_TOKENS:
+    if is_token_of_type(token, literal_token):
       return True
     
   return False
