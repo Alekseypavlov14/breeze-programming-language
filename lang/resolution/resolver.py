@@ -13,23 +13,70 @@ import os
 # Topological sort is required to execute modules in correct order.
 # Circular dependencies are not allowed!
 class Resolver:
-  # resolves dependencies starting from entry point
-  # entrypoint is an ABSOLUTE path to the entry module
-  def __init__(self, entrypoint: str):
-    self.entrypoint = entrypoint
-
+  def __init__(self):
     # instances required for operations
     self.lexer = Lexer()
     self.parser = Parser()
     self.registry = Registry()
 
+  # this method receives the ABSOLUTE path to entry point module
+  # It recursively receives modules dependencies and adds them to Registry
+  def resolve_modules(self, entrypoint: str):
+    # initialize analyzed modules paths
+    analyzed_paths = set()
+    # initialize currently analyzing modules paths
+    analyzing_paths = set()
+
+    # get module by ABSOLUTE path
+    # gets module dependencies
+    # continues search until tree is not searched
+    def search(path):
+      # do not search analyzed path again
+      if path in analyzed_paths:
+        return
+
+      # if this module is analyzing - Circular Dependency
+      if path in analyzing_paths:
+        raise (f'Circular dependency including module by path {path}')
+
+      # get module and dependencies
+      module = self.get_module_by_absolute_path(path)
+      dependencies = self.get_module_dependencies(module)
+
+      # set module dependencies
+      module.dependencies = dependencies
+      
+      # add resolved module in registry
+      self.registry.add_module(module)
+
+      # make path currently analyzing
+      analyzing_paths.add(path)
+
+      # add new paths
+      for dependency in dependencies:
+        search(dependency.path)
+
+      # make path analyzed
+      analyzing_paths.remove(path)
+      analyzed_paths.add(path)
+
+    # start search from entry point
+    search(entrypoint)
+
+  # this method sorts modules in place and returns the sorted list
+  def sort_modules(self) -> list[Module]:
+    self.registry.sort_topologically()
+    return self.registry.get_modules()
+
   # returns list of dependency modules
   # based on IMPORT statements
-  # adds dependency modules to registry
-  # does not add duplicates
+  # does not return duplicates
   def get_module_dependencies(self, module: Module) -> list[Module]:
     # extract statements from module
     statements = module.content.statements
+
+    # dependencies set to prevent duplicates
+    dependencies = set()
 
     # get import statements
     # check only first-level statements
@@ -54,13 +101,14 @@ class Resolver:
         module = self.get_module_by_absolute_path(absolute_path)
 
         # add module
-        module.dependencies.append(module)
+        dependencies.add(module)
 
-    # return module dependencies list
-    return module.dependencies
+    # return dependencies list
+    return list(dependencies)
 
   # receives the ABSOLUTE path 
   # returns Module instance
+  # does NOT parse dependencies
   def get_module_by_absolute_path(self, path: str) -> Module:
     # do not parse module if it is already parsed
     if self.registry.is_module_added_by_path(path):
