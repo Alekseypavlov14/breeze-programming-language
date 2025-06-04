@@ -10,7 +10,6 @@ path = "C:/Users/User/Desktop/programming language/lang/examples/example.br"
 resolver.resolve_modules(path)
 
 content = resolver.get_module_content_by_absolute_path(path)
-print(content)
 
 lexer = Lexer()
 parser = Parser()
@@ -20,5 +19,6 @@ print(st.statements)
 
 modules = resolver.sort_modules()
 for module in modules:
+  print(f"Module with path: {module.path}")
   for statement in module.content.statements:
     print(statement)

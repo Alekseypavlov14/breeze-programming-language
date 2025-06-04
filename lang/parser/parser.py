@@ -43,23 +43,23 @@ class Parser:
     if self.match_comment():
       return self.parse_comment()
     if self.match_variable_declaration():
-      return self.parse_variable_declaration()
+      return self.parse_variable_declaration(*terminators)
     if self.match_constant_declaration():
-      return self.parse_constant_declaration()
+      return self.parse_constant_declaration(*terminators)
     if self.match_condition_statement():
-      return self.parse_condition_statement()
+      return self.parse_condition_statement(*terminators)
     if self.match_for_statement():
-      return self.parse_for_statement()
+      return self.parse_for_statement(*terminators)
     if self.match_while_statement():
-      return self.parse_while_statement()
+      return self.parse_while_statement(*terminators)
     if self.match_function_declaration_statement():
       return self.parse_function_declaration_statement()
     if self.match_return_statement():
       return self.parse_return_statement()
     if self.match_import_statement():
-      return self.parse_import_statement()
+      return self.parse_import_statement(*terminators)
     if self.match_export_statement():
-      return self.parse_export_statement()
+      return self.parse_export_statement(*terminators)
     if self.match_block_statement():
       return self.parse_block_statement()
     
@@ -69,7 +69,7 @@ class Parser:
   # Methods to require standalone statements
   # Require tokens. Check before
 
-  def parse_variable_declaration(self):
+  def parse_variable_declaration(self, *terminators: list[Token]):
     # require VAR keyword
     self.require_token(map_keyword_to_token(VAR_KEYWORD))
     self.consume_current_token()
@@ -93,12 +93,12 @@ class Parser:
 
       self.skip_tokens(SPACE_TOKEN)
 
-      expression = self.parse_expression(None, BASE_PRECEDENCE, NEWLINE_TOKEN)
+      expression = self.parse_expression(None, BASE_PRECEDENCE, NEWLINE_TOKEN, *terminators)
       return VariableDeclarationStatement(identifier, expression)
     
     # if other symbol - raise error
     raise ParserError('Invalid variable declaration')
-  def parse_constant_declaration(self):
+  def parse_constant_declaration(self, *terminators: list[Token]):
      # require CONST keyword
     self.require_token(map_keyword_to_token(CONST_KEYWORD))
     self.consume_current_token()
@@ -121,9 +121,9 @@ class Parser:
 
     self.skip_tokens(SPACE_TOKEN)
 
-    initialization = self.parse_expression(None, BASE_PRECEDENCE, NEWLINE_TOKEN)
+    initialization = self.parse_expression(None, BASE_PRECEDENCE, NEWLINE_TOKEN, *terminators)
     return ConstantDeclarationStatement(identifier, initialization)
-  def parse_condition_statement(self):
+  def parse_condition_statement(self, *terminators: list[Token]):
     # start with IF keyword
     self.require_token(map_keyword_to_token(IF_KEYWORD))
     self.consume_current_token()
@@ -149,7 +149,7 @@ class Parser:
     self.skip_tokens(SPACE_TOKEN, NEWLINE_TOKEN)
 
     # get THEN statement
-    then_branch = self.parse_statement()
+    then_branch = self.parse_statement(*terminators)
 
     self.skip_tokens(SPACE_TOKEN, NEWLINE_TOKEN)
 
@@ -164,11 +164,11 @@ class Parser:
       self.skip_tokens(SPACE_TOKEN)
 
       # get ELSE statement
-      else_branch = self.parse_statement()
+      else_branch = self.parse_statement(*terminators)
 
     # return condition statement
     return ConditionStatement(condition, then_branch, else_branch)
-  def parse_for_statement(self):
+  def parse_for_statement(self, *terminators: list[Token]):
     # get FOR keyword
     self.require_token(map_keyword_to_token(FOR_KEYWORD))
     self.consume_current_token()
@@ -217,10 +217,10 @@ class Parser:
     self.skip_tokens(SPACE_TOKEN, NEWLINE_TOKEN)
 
     # get loop body
-    body = self.parse_statement()
+    body = self.parse_statement(*terminators)
 
     return ForStatement(initialization, condition, increment, body)
-  def parse_while_statement(self):
+  def parse_while_statement(self, *terminators: list[Token]):
     # start with WHILE keyword
     self.require_token(map_keyword_to_token(WHILE_KEYWORD))
     self.consume_current_token()
@@ -246,7 +246,7 @@ class Parser:
     self.skip_tokens(SPACE_TOKEN, NEWLINE_TOKEN)
 
     # get body statement
-    body = self.parse_statement()
+    body = self.parse_statement(*terminators)
 
     return WhileStatement(condition, body)
   def parse_break_statement(self):
@@ -298,7 +298,7 @@ class Parser:
     body = self.parse_block_statement()
 
     return FunctionDeclarationStatement(name, parameters, body)
-  def parse_return_statement(self):
+  def parse_return_statement(self, *terminators: list[Token]):
     # require return
     self.require_token(map_keyword_to_token(RETURN_KEYWORD))
     self.consume_current_token()
@@ -306,11 +306,11 @@ class Parser:
     self.skip_tokens(SPACE_TOKEN)
 
     # compose return statement
-    expression = self.parse_expression(None, BASE_PRECEDENCE, NEWLINE_TOKEN)
+    expression = self.parse_expression(None, BASE_PRECEDENCE, NEWLINE_TOKEN, *terminators)
     return ReturnStatement(expression)
   def parse_class_declaration_statement(self):
     pass
-  def parse_import_statement(self):
+  def parse_import_statement(self, *terminators: list[Token]):
     # get IMPORT token
     self.require_token(map_keyword_to_token(IMPORT_KEYWORD))
     self.consume_current_token()
@@ -331,11 +331,11 @@ class Parser:
     self.consume_current_token()
 
     # parse from content
-    path = self.parse_expression(None, BASE_PRECEDENCE, NEWLINE_TOKEN)
+    path = self.parse_expression(None, BASE_PRECEDENCE, NEWLINE_TOKEN, *terminators)
 
     # return import statement
     return ImportStatement(path, imports)
-  def parse_export_statement(self):
+  def parse_export_statement(self, *terminators: list[Token]):
     # require EXPORT keyword
     self.require_token(map_keyword_to_token(EXPORT_KEYWORD))
     self.consume_current_token()
@@ -343,7 +343,7 @@ class Parser:
     self.skip_tokens(SPACE_TOKEN)
 
     # get export statement
-    exports = self.parse_statement(NEWLINE_TOKEN)
+    exports = self.parse_statement(NEWLINE_TOKEN, *terminators)
 
     return ExportStatement(exports)
   def parse_block_statement(self):
@@ -439,16 +439,12 @@ class Parser:
       self.skip_tokens(SPACE_TOKEN)
 
       # if new line or terminator - finish
-      if self.match_token(NEWLINE_TOKEN, *terminators) or self.is_end():
+      if self.is_end() or self.match_token(NEWLINE_TOKEN, *terminators):
         return base_expression
     
     # skip spaces and newlines (expressions can take several lines if needed)
     self.skip_tokens(SPACE_TOKEN, NEWLINE_TOKEN)
 
-    # stop if end or terminator is reached
-    if self.is_end() or self.match_token(*terminators):
-      return NullExpression()
-    
     # init node tokens
     passed_tokens: list[Token] = []
     
@@ -458,9 +454,9 @@ class Parser:
       if base_expression:
         raise ParserError('Invalid expression')
       
-      # check if terminators are not reached
-      # when reach terminator, finish expression parsing
-      if self.match_token(*terminators):
+      # check if terminators or end of module are not reached
+      # when reach terminator or end of module, finish expression parsing
+      if self.match_token(*terminators) or self.is_end():
         return self.parse_expression_from_tokens(passed_tokens)
       
       # append tokens to list
@@ -468,6 +464,10 @@ class Parser:
 
       # skip spaces again
       self.skip_tokens(SPACE_TOKEN)
+
+    # stop if end or terminator is reached
+    if self.is_end() or self.match_token(*terminators):
+      return self.parse_expression_from_tokens(passed_tokens)
 
     # get found operator. Consume and move position
     operator = self.consume_current_token()
