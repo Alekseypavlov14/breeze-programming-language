@@ -6,7 +6,7 @@ from resolution.resolver import Resolver
 
 resolver = Resolver()
 
-path = "C:/Users/User/Desktop/programming language/lang/examples/example.br"
+path = "C:/Users/User/Desktop/programming language/examples/example.br"
 resolver.resolve_modules(path)
 
 content = resolver.get_module_content_by_absolute_path(path)
