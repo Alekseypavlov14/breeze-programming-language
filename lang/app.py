@@ -14,7 +14,7 @@ content = resolver.get_module_content_by_absolute_path(path)
 lexer = Lexer()
 parser = Parser()
 
-st = parser.parse(lexer.parse_module(content))
+st = parser.parse(lexer.parse(content))
 print(st.statements)
 
 modules = resolver.sort_modules()

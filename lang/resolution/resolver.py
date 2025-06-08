@@ -118,7 +118,7 @@ class Resolver:
     content = self.get_module_content_by_absolute_path(path)
 
     # get module tokens
-    tokens = self.lexer.parse_module(content)
+    tokens = self.lexer.parse(content)
     # parse AST
     ast = self.parser.parse(tokens)
 

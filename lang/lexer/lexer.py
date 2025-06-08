@@ -9,7 +9,7 @@ import re
 # class that parses code to tokens
 class Lexer:
   # parses code (module) to tokens
-  def parse_module(self, code: str):
+  def parse(self, code: str):
     # init tokens list
     tokens: list[Token] = []
     # init position
