@@ -11,6 +11,7 @@ from shared.tokens import *
 from shared.keywords import *
 
 # class that parses token list to AST
+# AST is built with Statements and Expressions
 class Parser:
   def __init__(self):
     # list of tokens that are in use to build AST
