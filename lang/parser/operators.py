@@ -13,33 +13,51 @@ BASE_PRECEDENCE = -1
 # defines operators priority
 # from most to least
 OPERATOR_PRECEDENCE = [
-  (ASSIGN_TOKEN, BinaryOperationExpression),
-
   (LAMBDA_TOKEN, BinaryOperationExpression),
+
+  (BIT_AND_ASSIGN_TOKEN, BinaryOperationExpression),
+  (BIT_OR_ASSIGN_TOKEN, BinaryOperationExpression),
+  (BIT_XOR_ASSIGN_TOKEN, BinaryOperationExpression),
+  (LEFT_SHIFT_ASSIGN_TOKEN, BinaryOperationExpression),
+  (RIGHT_SHIFT_ASSIGN_TOKEN, BinaryOperationExpression),
+
+  (REMAINDER_ASSIGN_TOKEN, BinaryOperationExpression),
+  (DIVISION_ASSIGN_TOKEN, BinaryOperationExpression),
+  (MULTIPLICATION_ASSIGN_TOKEN, BinaryOperationExpression),
+  (EXPONENTIAL_ASSIGN_TOKEN, BinaryOperationExpression),
+
+  (MINUS_ASSIGN_TOKEN, BinaryOperationExpression),
+  (PLUS_ASSIGN_TOKEN, BinaryOperationExpression),
+
+  (ASSIGN_TOKEN, BinaryOperationExpression),
 
   (OR_TOKEN, BinaryOperationExpression),
   (AND_TOKEN, BinaryOperationExpression),
 
-  (EQUAL_TOKEN, BinaryOperationExpression),
+  (BIT_OR_TOKEN, BinaryOperationExpression),
+  (BIT_XOR_TOKEN, BinaryOperationExpression),
+  (BIT_AND_TOKEN, BinaryOperationExpression),
+
   (NOT_EQUAL_TOKEN, BinaryOperationExpression),
+  (EQUAL_TOKEN, BinaryOperationExpression),
 
-  (LESS_THAN_TOKEN, BinaryOperationExpression),
-  (LESS_THAN_OR_EQUAL_TOKEN, BinaryOperationExpression),
-  (GREATER_THAN_TOKEN, BinaryOperationExpression),
   (GREATER_THAN_OR_EQUAL_TOKEN, BinaryOperationExpression),
+  (GREATER_THAN_TOKEN, BinaryOperationExpression),
+  (LESS_THAN_OR_EQUAL_TOKEN, BinaryOperationExpression),
+  (LESS_THAN_TOKEN, BinaryOperationExpression),
 
-  (PLUS_ASSIGN_TOKEN, BinaryOperationExpression),
-  (MINUS_ASSIGN_TOKEN, BinaryOperationExpression),
+  (LEFT_SHIFT_TOKEN, BinaryOperationExpression),
+  (RIGHT_SHIFT_TOKEN, BinaryOperationExpression),
 
-  (MULTIPLICATION_ASSIGN_TOKEN, BinaryOperationExpression),
-  (DIVISION_ASSIGN_TOKEN, BinaryOperationExpression),
-
-  (PLUS_TOKEN, BinaryOperationExpression),
   (MINUS_TOKEN, BinaryOperationExpression),
+  (PLUS_TOKEN, BinaryOperationExpression),
 
-  (MULTIPLICATION_TOKEN, BinaryOperationExpression),
+  (REMAINDER_TOKEN, BinaryOperationExpression),
   (DIVISION_TOKEN, BinaryOperationExpression),
+  (MULTIPLICATION_TOKEN, BinaryOperationExpression),
+  (EXPONENTIAL_TOKEN, BinaryOperationExpression),
 
+  (BIT_NOT_TOKEN, PrefixUnaryOperationExpression),
   (NOT_TOKEN, PrefixUnaryOperationExpression),
 
   (INCREMENT_TOKEN, AffixUnaryOperationExpression),
