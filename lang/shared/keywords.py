@@ -32,6 +32,11 @@ EXPORT_KEYWORD = 'export'
 CLASS_KEYWORD = 'class'
 NEW_KEYWORD = 'new'
 
+# literals
+TRUE_KEYWORD = 'true'
+FALSE_KEYWORD = 'false'
+NULL_KEYWORD = 'null'
+
 # list of keywords used in language
 KEYWORDS = [
   VAR_KEYWORD,
@@ -54,6 +59,10 @@ KEYWORDS = [
 
   CLASS_KEYWORD,
   NEW_KEYWORD,
+
+  TRUE_KEYWORD,
+  FALSE_KEYWORD,
+  NULL_KEYWORD,
 ]
 
 # map keyword to token tuple

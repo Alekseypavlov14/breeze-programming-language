@@ -1,3 +1,4 @@
+from shared.keywords import *
 from shared.tokens import *
 from lexer.token import *
 
@@ -5,6 +6,9 @@ from lexer.token import *
 LITERAL_TOKENS = [
   STRING_TOKEN,
   NUMBER_TOKEN,
+  map_keyword_to_token(TRUE_KEYWORD),
+  map_keyword_to_token(FALSE_KEYWORD),
+  map_keyword_to_token(NULL_KEYWORD),
 ]
 
 # use to check if token is literal
