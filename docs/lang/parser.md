@@ -42,5 +42,7 @@ Parser methods are built on two basic methods: match_token and require_token
 
 There are other methods to get tokens and move pointer but they are utilities.
 
+Every statement starts with **parse_statement** call that analyses tokens in stream. If tokens match standard statement (loop or declaration), corresponding method is called. Otherwise, **parse_expression** is called and the statement is considered as **ExpressionStatement**. Expressions are parsed recursively creating a tree with operators.
+
 ## Exceptions
 - ParserError - is raised when required token is not present

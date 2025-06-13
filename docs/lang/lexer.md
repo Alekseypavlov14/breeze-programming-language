@@ -1,6 +1,6 @@
 # Lexer 
 
-Lexer is a part of an interpreter that parses the source code and returns the list of tokens.
+Lexer is a part of an interpreter that parses **the source code** and returns the **list of tokens**.
 
 ## Token 
 
