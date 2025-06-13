@@ -32,7 +32,7 @@ Operators can be **unary**: prefix, suffix and affix (both), **binary**, **group
 
 Expressions are parsed until specified separator (usually NEWLINE) and parser recursively generates tree of operations based on their **precedence**. 
 
-Expressions cannot follow each other in the same AST node without operator between them. Every pair of expressions is connected by **operator** of belongs to different **expression statements**.
+Expressions cannot follow each other in the same AST node without operator between them. Every pair of expressions is connected by **operator** or belongs to different **expression statements**.
 
 ## Parser methods
 

@@ -7,4 +7,13 @@ class StackError(Exception):
 class NameError(Exception):
   def __init__(self, message = ''):
     super().__init__(message)
+
+# defines type error
+class TypeError(Exception):
+  def __init__(self, message = ''):
+    super().__init__(message)
     
+# defines error during expression evaluation
+class ExpressionError(Exception):
+  def __init__(self, message = ''):
+    super().__init__(message)
