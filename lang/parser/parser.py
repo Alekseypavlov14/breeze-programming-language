@@ -491,6 +491,10 @@ class Parser:
           if len(passed_tokens):
             operand = self.parse_expression_from_tokens(passed_tokens)
 
+          # validate operand
+          if is_expression_of_class(operand, NullExpression):
+            raise ParserError(f'Unary operator {operator.code} requires operand')
+          
           # compose expression
           expression = SuffixUnaryOperationExpression(operator, operand)
           
@@ -504,6 +508,11 @@ class Parser:
         
         # no base expression because no tokens, started with operator
         operand = self.parse_expression(None, precedence, *terminators)
+        
+        # validate operand
+        if is_expression_of_class(operand, NullExpression):
+          raise ParserError(f'Unary operator {operator.code} requires operand')
+
         expression = PrefixUnaryOperationExpression(operator, operand)
 
         # use this expression as base and continue parsing
@@ -532,7 +541,15 @@ class Parser:
         if len(passed_tokens):
           left_branch = self.parse_expression_from_tokens(passed_tokens)
 
+        # validate operand
+        if is_expression_of_class(left_branch, NullExpression):
+          raise ParserError(f'Binary operator {operator.code} requires left operand')
+
         right_branch = self.parse_expression(None, precedence, *terminators)
+
+        # validate operand
+        if is_expression_of_class(right_branch, NullExpression):
+          raise ParserError(f'Binary operator {operator.code} requires right operand')
         
         # compose expression
         expression = BinaryOperationExpression(operator, left_branch, right_branch)
@@ -571,6 +588,21 @@ class Parser:
         # add found expression
         expressions.append(self.parse_expression(None, BASE_PRECEDENCE, *grouping_terminators))
 
+        # consume possible comma
+        if self.match_token(COMMA_TOKEN):
+          self.consume_current_token()
+
+      # validate expressions
+      if len(expressions):
+        # do not check last expression (trailing commas are allowed)
+        for i in range(len(expressions) - 1):
+          if is_expression_of_class(expressions[i], NullExpression):
+            raise ParserError('Incorrect expression in group')
+          
+        # remove last NullExpression (trailing comma case)
+        if is_expression_of_class(expressions[-1], NullExpression):
+          expressions.pop()
+
       # consume closing token
       self.consume_current_token()
 
@@ -588,6 +620,10 @@ class Parser:
         # if previous tokens are present - compute expression
         if len(passed_tokens):
           left = self.parse_expression_from_tokens(passed_tokens)
+
+        # validate left expression
+        if is_expression_of_class(left, NullExpression):
+          return grouping_expression
         
         # compose expression
         expression = GroupingApplicationExpression(left, grouping_expression)
@@ -611,12 +647,15 @@ class Parser:
     # handle association operations
     if is_association_operator(operator):
       # initialize entries
-      entries: list[tuple[Exception, Exception]] = []
+      entries: list[tuple[Expression, Expression]] = []
 
       while not self.match_token(RIGHT_CURLY_BRACE_TOKEN):
         # parse key expression
         # search until association closing or colon
         key_expression = self.parse_expression(None, BASE_PRECEDENCE, RIGHT_CURLY_BRACE_TOKEN, COLON_TOKEN)
+
+        if is_expression_of_class(key_expression, NullExpression):
+          raise ParserError('Invalid key expression')
 
         # require and consume colon
         self.require_token(COLON_TOKEN)
@@ -626,8 +665,26 @@ class Parser:
         # search until association closing or comma
         value_expression = self.parse_expression(None, BASE_PRECEDENCE, RIGHT_CURLY_BRACE_TOKEN, COMMA_TOKEN)
 
+        if is_expression_of_class(value_expression, NullExpression):
+          raise ParserError('Invalid value expression')
+
         # append entry
         entries.append((key_expression, value_expression))
+
+        # consume possible comma
+        if self.match_token(COMMA_TOKEN):
+          self.consume_current_token()
+
+      # validate expressions
+      if len(expressions):
+        # do not check last expression (trailing commas are allowed)
+        for i in range(len(expressions) - 1):
+          if is_expression_of_class(expressions[i], NullExpression):
+            raise ParserError('Incorrect expression in group')
+          
+        # remove last NullExpression (trailing comma case)
+        if is_expression_of_class(expressions[-1], NullExpression):
+          expressions.pop()
       
       # compose association
       expression = AssociationExpression(entries)
