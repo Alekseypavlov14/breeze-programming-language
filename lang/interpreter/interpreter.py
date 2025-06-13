@@ -1,11 +1,16 @@
 from interpreter.stack import *
 from interpreter.exceptions import *
+from interpreter.types import *
+
 from resolution.module import *
+
 from parser.types.expressions import *
 from parser.types.statements import *
+
+from lexer.token import *
+
 from shared.keywords import *
 from shared.tokens import *
-from lexer.token import *
 
 # executes AST
 class Interpreter:
@@ -49,17 +54,603 @@ class Interpreter:
   def evaluate_expression(self, expression: Expression):
     pass
 
-  # binary expressions
-  def evaluate_binary_expression(self, expression: Expression):
+  # unary expressions
+  def evaluate_unary_expression(self, expression: UnaryOperationExpression):
     pass
+
+  def evaluate_not_expression(self, expression: UnaryOperationExpression):
+    container: ReadableContainer = self.evaluate_expression(expression.operand)
+    if not is_container_of_type(container, ReadableContainer):
+      raise ExpressionError('Operand value is not readable')
+
+    return self.create_readable_container(not container.read())
+  
+  def evaluate_bit_not_expression(self, expression: UnaryOperationExpression):
+    container: ReadableContainer = self.evaluate_expression(expression.operand)
+    if not is_container_of_type(container, ReadableContainer):
+      raise ExpressionError('Operand value is not readable')
+    
+    value = container.read()
+
+    if self.is_value_of_type(value, NUMBER_TYPE):
+      return self.create_readable_container(~round(value))
+
+    raise TypeError(f'Unary operator {expression.operator.code} with type {get_value_type(value)} is not supported')
+
+  def evaluate_increment_expression(self, expression: UnaryOperationExpression):
+    container: TransformContainer = self.evaluate_expression(expression.operand)
+    if not is_container_of_type(container, TransformContainer):
+      raise ExpressionError('Operand value is not readable and writable')
+    
+    value = container.read()
+
+    if self.is_value_of_type(value, NUMBER_TYPE):
+      container.write(value + 1)
+      return container
+    
+    raise TypeError(f'Unary operator {expression.operator.code} with type {get_value_type(value)} is not supported')
+
+  def evaluate_decrement_expression(self, expression: UnaryOperationExpression):
+    container: TransformContainer = self.evaluate_expression(expression.operand)
+    if not is_container_of_type(container, TransformContainer):
+      raise ExpressionError('Operand value is not readable and writable')
+    
+    value = container.read()
+
+    if self.is_value_of_type(value, NUMBER_TYPE):
+      container.write(value - 1)
+      return container
+    
+    raise TypeError(f'Unary operator {expression.operator.code} with type {get_value_type(value)} is not supported')
+
+  # binary expressions
+  def evaluate_binary_expression(self, expression: BinaryOperationExpression):
+    pass
+
+  def evaluate_assign_expression(self, expression: BinaryOperationExpression):
+    left: WriteableContainer = self.evaluate_expression(expression.left)
+    if not is_container_of_type(left, WriteableContainer):
+      raise ExpressionError('Left value is not writable')
+    
+    right: ReadableContainer = self.evaluate_expression(expression.right)
+    if not is_container_of_type(right, ReadableContainer):
+      raise ExpressionError('Right container is not readable')
+    
+    left.write(right.read())
+
+    return left
 
   def evaluate_addition_expression(self, expression: BinaryOperationExpression):
-    left = self.evaluate_expression(expression.left)
-    right = self.evaluate_expression(expression.right)
+    left: ReadableContainer = self.evaluate_expression(expression.left)
+    if not is_container_of_type(left, ReadableContainer):
+      raise ExpressionError('Left value is not readable')
+    
+    right: ReadableContainer = self.evaluate_expression(expression.right)
+    if not is_container_of_type(right, ReadableContainer):
+      raise ExpressionError('Right container is not readable')
+    
+    left_value = left.read()
+    right_value = right.read()
+
+    # handle number addition
+    if self.is_value_of_type(left_value, NUMBER_TYPE) and self.is_value_of_type(right_value, NUMBER_TYPE):
+      return self.create_readable_container(left.value + right_value)
+    
+    # handle string concatenation
+    if self.is_value_of_type(left_value, STRING_TYPE) and self.is_value_of_type(right_value, STRING_TYPE):
+      return self.create_readable_container(left_value + right_value)
+    
+    raise TypeError(f'Binary operation {expression.operator.code} with types {get_value_type(left_value)} and {get_value_type(right_value)} is not supported')
 
   def evaluate_subtraction_expression(self, expression: BinaryOperationExpression):
-    pass
+    left: ReadableContainer = self.evaluate_expression(expression.left)
+    if not is_container_of_type(left, ReadableContainer):
+      raise ExpressionError('Left value is not readable')
+    
+    right: ReadableContainer = self.evaluate_expression(expression.right)
+    if not is_container_of_type(right, ReadableContainer):
+      raise ExpressionError('Right container is not readable')
+    
+    left_value = left.read()
+    right_value = right.read()
 
+    # handle number subtraction
+    if self.is_value_of_type(left_value, NUMBER_TYPE) and self.is_value_of_type(right_value, NUMBER_TYPE):
+      return self.create_readable_container(left.value - right_value)
+    
+    raise TypeError(f'Binary operation {expression.operator.code} with types {get_value_type(left_value)} and {get_value_type(right_value)} is not supported')
+
+  def evaluate_multiplication_expression(self, expression: BinaryOperationExpression):
+    left: ReadableContainer = self.evaluate_expression(expression.left)
+    if not is_container_of_type(left, ReadableContainer):
+      raise ExpressionError('Left value is not readable')
+    
+    right: ReadableContainer = self.evaluate_expression(expression.right)
+    if not is_container_of_type(right, ReadableContainer):
+      raise ExpressionError('Right container is not readable')
+    
+    left_value = left.read()
+    right_value = right.read()
+
+    # handle number multiplication
+    if self.is_value_of_type(left_value, NUMBER_TYPE) and self.is_value_of_type(right_value, NUMBER_TYPE):
+      return self.create_readable_container(left.value * right_value)
+    
+    raise TypeError(f'Binary operation {expression.operator.code} with types {get_value_type(left_value)} and {get_value_type(right_value)} is not supported')
+
+  def evaluate_division_expression(self, expression: BinaryOperationExpression):
+    left: ReadableContainer = self.evaluate_expression(expression.left)
+    if not is_container_of_type(left, ReadableContainer):
+      raise ExpressionError('Left value is not readable')
+    
+    right: ReadableContainer = self.evaluate_expression(expression.right)
+    if not is_container_of_type(right, ReadableContainer):
+      raise ExpressionError('Right container is not readable')
+    
+    left_value = left.read()
+    right_value = right.read()
+
+    # handle number division
+    if self.is_value_of_type(left_value, NUMBER_TYPE) and self.is_value_of_type(right_value, NUMBER_TYPE):
+      if right_value == 0:
+        raise ValueError('Division by zero is not allowed')
+      
+      return self.create_readable_container(left.value / right_value)
+    
+    raise TypeError(f'Binary operation {expression.operator.code} with types {get_value_type(left_value)} and {get_value_type(right_value)} is not supported')
+
+  def evaluate_exponential_expression(self, expression: BinaryOperationExpression):
+    left: ReadableContainer = self.evaluate_expression(expression.left)
+    if not is_container_of_type(left, ReadableContainer):
+      raise ExpressionError('Left value is not readable')
+    
+    right: ReadableContainer = self.evaluate_expression(expression.right)
+    if not is_container_of_type(right, ReadableContainer):
+      raise ExpressionError('Right container is not readable')
+    
+    left_value = left.read()
+    right_value = right.read()
+
+    # handle exponential
+    if self.is_value_of_type(left_value, NUMBER_TYPE) and self.is_value_of_type(right_value, NUMBER_TYPE):
+      if left_value < 0:
+        raise ValueError('Exponential with negative base is not allowed')
+      
+      return self.create_readable_container(left.value ** right_value)
+    
+    raise TypeError(f'Binary operation {expression.operator.code} with types {get_value_type(left_value)} and {get_value_type(right_value)} is not supported')
+
+  def evaluate_remainder_expression(self, expression: BinaryOperationExpression):
+    left: ReadableContainer = self.evaluate_expression(expression.left)
+    if not is_container_of_type(left, ReadableContainer):
+      raise ExpressionError('Left value is not readable')
+    
+    right: ReadableContainer = self.evaluate_expression(expression.right)
+    if not is_container_of_type(right, ReadableContainer):
+      raise ExpressionError('Right container is not readable')
+    
+    left_value = left.read()
+    right_value = right.read()
+
+    # handle remainder
+    if self.is_value_of_type(left_value, NUMBER_TYPE) and self.is_value_of_type(right_value, NUMBER_TYPE):
+      return self.create_readable_container(left.value % right_value)
+    
+    raise TypeError(f'Binary operation {expression.operator.code} with types {get_value_type(left_value)} and {get_value_type(right_value)} is not supported')
+
+  def evaluate_bit_and_expression(self, expression: BinaryOperationExpression):
+    left: ReadableContainer = self.evaluate_expression(expression.left)
+    if not is_container_of_type(left, ReadableContainer):
+      raise ExpressionError('Left value is not readable')
+    
+    right: ReadableContainer = self.evaluate_expression(expression.right)
+    if not is_container_of_type(right, ReadableContainer):
+      raise ExpressionError('Right container is not readable')
+    
+    left_value = left.read()
+    right_value = right.read()
+    
+    if self.is_value_of_type(left_value, NUMBER_TYPE) and self.is_value_of_type(right_value, NUMBER_TYPE):
+      return self.create_readable_container(round(left_value) & round(right_value))
+    
+    raise TypeError(f'Binary operation {expression.operator.code} with types {get_value_type(left_value)} and {get_value_type(right_value)} is not supported')
+
+  def evaluate_bit_or_expression(self, expression: BinaryOperationExpression):
+    left: ReadableContainer = self.evaluate_expression(expression.left)
+    if not is_container_of_type(left, ReadableContainer):
+      raise ExpressionError('Left value is not readable')
+    
+    right: ReadableContainer = self.evaluate_expression(expression.right)
+    if not is_container_of_type(right, ReadableContainer):
+      raise ExpressionError('Right container is not readable')
+    
+    left_value = left.read()
+    right_value = right.read()
+    
+    if self.is_value_of_type(left_value, NUMBER_TYPE) and self.is_value_of_type(right_value, NUMBER_TYPE):
+      return self.create_readable_container(round(left_value) | round(right_value))
+    
+    raise TypeError(f'Binary operation {expression.operator.code} with types {get_value_type(left_value)} and {get_value_type(right_value)} is not supported')
+
+  def evaluate_bit_xor_expression(self, expression: BinaryOperationExpression):
+    left: ReadableContainer = self.evaluate_expression(expression.left)
+    if not is_container_of_type(left, ReadableContainer):
+      raise ExpressionError('Left value is not readable')
+    
+    right: ReadableContainer = self.evaluate_expression(expression.right)
+    if not is_container_of_type(right, ReadableContainer):
+      raise ExpressionError('Right container is not readable')
+    
+    left_value = left.read()
+    right_value = right.read()
+    
+    if self.is_value_of_type(left_value, NUMBER_TYPE) and self.is_value_of_type(right_value, NUMBER_TYPE):
+      return self.create_readable_container(round(left_value) ^ round(right_value))
+    
+    raise TypeError(f'Binary operation {expression.operator.code} with types {get_value_type(left_value)} and {get_value_type(right_value)} is not supported')
+
+  def evaluate_left_shift_expression(self, expression: BinaryOperationExpression):
+    left: ReadableContainer = self.evaluate_expression(expression.left)
+    if not is_container_of_type(left, ReadableContainer):
+      raise ExpressionError('Left value is not readable')
+    
+    right: ReadableContainer = self.evaluate_expression(expression.right)
+    if not is_container_of_type(right, ReadableContainer):
+      raise ExpressionError('Right container is not readable')
+    
+    left_value = left.read()
+    right_value = right.read()
+    
+    if self.is_value_of_type(left_value, NUMBER_TYPE) and self.is_value_of_type(right_value, NUMBER_TYPE):
+      return self.create_readable_container(round(left_value) << round(right_value))
+    
+    raise TypeError(f'Binary operation {expression.operator.code} with types {get_value_type(left_value)} and {get_value_type(right_value)} is not supported')
+
+  def evaluate_right_shift_expression(self, expression: BinaryOperationExpression):
+    left: ReadableContainer = self.evaluate_expression(expression.left)
+    if not is_container_of_type(left, ReadableContainer):
+      raise ExpressionError('Left value is not readable')
+    
+    right: ReadableContainer = self.evaluate_expression(expression.right)
+    if not is_container_of_type(right, ReadableContainer):
+      raise ExpressionError('Right container is not readable')
+    
+    left_value = left.read()
+    right_value = right.read()
+    
+    if self.is_value_of_type(left_value, NUMBER_TYPE) and self.is_value_of_type(right_value, NUMBER_TYPE):
+      return self.create_readable_container(round(left_value) >> round(right_value))
+    
+    raise TypeError(f'Binary operation {expression.operator.code} with types {get_value_type(left_value)} and {get_value_type(right_value)} is not supported')
+
+  def evaluate_addition_and_assign_expression(self, expression: BinaryOperationExpression):
+    left: TransformContainer = self.evaluate_expression(expression.left)
+    if not is_container_of_type(left, TransformContainer):
+      raise ExpressionError('Left value is not readable and writable')
+    
+    right: ReadableContainer = self.evaluate_expression(expression.right)
+    if not is_container_of_type(right, ReadableContainer):
+      raise ExpressionError('Right container is not readable')
+    
+    left_value = left.read()
+    right_value = right.read()
+    
+    # handle number addition
+    if self.is_value_of_type(left_value, NUMBER_TYPE) and self.is_value_of_type(right_value, NUMBER_TYPE):
+      left.write(left_value + right_value)
+      return left
+    
+    # handle string concatenation
+    if self.is_value_of_type(left_value, STRING_TYPE) and self.is_value_of_type(right_value, STRING_TYPE):
+      left.write(left_value + right_value)
+      return left
+    
+    raise TypeError(f'Binary operation {expression.operator.code} with types {get_value_type(left_value)} and {get_value_type(right_value)} is not supported')
+
+  def evaluate_subtraction_and_assign_expression(self, expression: BinaryOperationExpression):
+    left: TransformContainer = self.evaluate_expression(expression.left)
+    if not is_container_of_type(left, TransformContainer):
+      raise ExpressionError('Left value is not readable and writable')
+    
+    right: ReadableContainer = self.evaluate_expression(expression.right)
+    if not is_container_of_type(right, ReadableContainer):
+      raise ExpressionError('Right container is not readable')
+    
+    left_value = left.read()
+    right_value = right.read()
+    
+    if self.is_value_of_type(left_value, NUMBER_TYPE) and self.is_value_of_type(right_value, NUMBER_TYPE):
+      left.write(left_value - right_value)
+      return left
+
+    raise TypeError(f'Binary operation {expression.operator.code} with types {get_value_type(left_value)} and {get_value_type(right_value)} is not supported')
+  
+  def evaluate_multiplication_and_assign_expression(self, expression: BinaryOperationExpression):
+    left: TransformContainer = self.evaluate_expression(expression.left)
+    if not is_container_of_type(left, TransformContainer):
+      raise ExpressionError('Left value is not readable and writable')
+    
+    right: ReadableContainer = self.evaluate_expression(expression.right)
+    if not is_container_of_type(right, ReadableContainer):
+      raise ExpressionError('Right container is not readable')
+    
+    left_value = left.read()
+    right_value = right.read()
+    
+    if self.is_value_of_type(left_value, NUMBER_TYPE) and self.is_value_of_type(right_value, NUMBER_TYPE):
+      left.write(left_value * right_value)
+      return left
+
+    raise TypeError(f'Binary operation {expression.operator.code} with types {get_value_type(left_value)} and {get_value_type(right_value)} is not supported')
+  
+  def evaluate_division_and_assign_expression(self, expression: BinaryOperationExpression):
+    left: TransformContainer = self.evaluate_expression(expression.left)
+    if not is_container_of_type(left, TransformContainer):
+      raise ExpressionError('Left value is not readable and writable')
+    
+    right: ReadableContainer = self.evaluate_expression(expression.right)
+    if not is_container_of_type(right, ReadableContainer):
+      raise ExpressionError('Right container is not readable')
+    
+    left_value = left.read()
+    right_value = right.read()
+    
+    if self.is_value_of_type(left_value, NUMBER_TYPE) and self.is_value_of_type(right_value, NUMBER_TYPE):
+      if right_value == 0:
+        raise ValueError('Division by zero is not allowed')
+    
+      left.write(left_value / right_value)
+      return left
+    
+    raise TypeError(f'Binary operation {expression.operator.code} with types {get_value_type(left_value)} and {get_value_type(right_value)} is not supported')
+  
+  def evaluate_exponential_and_assign_expression(self, expression: BinaryOperationExpression):
+    left: TransformContainer = self.evaluate_expression(expression.left)
+    if not is_container_of_type(left, TransformContainer):
+      raise ExpressionError('Left value is not readable and writable')
+    
+    right: ReadableContainer = self.evaluate_expression(expression.right)
+    if not is_container_of_type(right, ReadableContainer):
+      raise ExpressionError('Right container is not readable')
+    
+    left_value = left.read()
+    right_value = right.read()
+    
+    if self.is_value_of_type(left_value, NUMBER_TYPE) and self.is_value_of_type(right_value, NUMBER_TYPE):
+      if left_value < 0:
+        raise ValueError('Exponential with negative base is not allowed')
+    
+      left.write(left_value ** right_value)
+      return left
+
+    raise TypeError(f'Binary operation {expression.operator.code} with types {get_value_type(left_value)} and {get_value_type(right_value)} is not supported')
+  
+  def evaluate_remainder_and_assign_expression(self, expression: BinaryOperationExpression):
+    left: TransformContainer = self.evaluate_expression(expression.left)
+    if not is_container_of_type(left, TransformContainer):
+      raise ExpressionError('Left value is not readable and writable')
+    
+    right: ReadableContainer = self.evaluate_expression(expression.right)
+    if not is_container_of_type(right, ReadableContainer):
+      raise ExpressionError('Right container is not readable')
+    
+    left_value = left.read()
+    right_value = right.read()
+
+    if self.is_value_of_type(left_value, NUMBER_TYPE) and self.is_value_of_type(right_value, NUMBER_TYPE):
+      left.write(left_value % right_value)
+      return left
+
+    raise TypeError(f'Binary operation {expression.operator.code} with types {get_value_type(left_value)} and {get_value_type(right_value)} is not supported')
+  
+  def evaluate_bit_and_and_assign_expression(self, expression: BinaryOperationExpression):
+    left: TransformContainer = self.evaluate_expression(expression.left)
+    if not is_container_of_type(left, TransformContainer):
+      raise ExpressionError('Left value is not readable and writable')
+    
+    right: ReadableContainer = self.evaluate_expression(expression.right)
+    if not is_container_of_type(right, ReadableContainer):
+      raise ExpressionError('Right container is not readable')
+    
+    left_value = left.read()
+    right_value = right.read()
+
+    if self.is_value_of_type(left_value, NUMBER_TYPE) and self.is_value_of_type(right_value, NUMBER_TYPE):
+      left.write(round(left_value) & round(right_value))
+      return left
+
+    raise TypeError(f'Binary operation {expression.operator.code} with types {get_value_type(left_value)} and {get_value_type(right_value)} is not supported')
+  
+  def evaluate_bit_or_and_assign_expression(self, expression: BinaryOperationExpression):
+    left: TransformContainer = self.evaluate_expression(expression.left)
+    if not is_container_of_type(left, TransformContainer):
+      raise ExpressionError('Left value is not readable and writable')
+    
+    right: ReadableContainer = self.evaluate_expression(expression.right)
+    if not is_container_of_type(right, ReadableContainer):
+      raise ExpressionError('Right container is not readable')
+    
+    left_value = left.read()
+    right_value = right.read()
+
+    if self.is_value_of_type(left_value, NUMBER_TYPE) and self.is_value_of_type(right_value, NUMBER_TYPE):
+      left.write(round(left_value) | round(right_value))
+      return left
+
+    raise TypeError(f'Binary operation {expression.operator.code} with types {get_value_type(left_value)} and {get_value_type(right_value)} is not supported')
+  
+  def evaluate_bit_xor_and_assign_expression(self, expression: BinaryOperationExpression):
+    left: TransformContainer = self.evaluate_expression(expression.left)
+    if not is_container_of_type(left, TransformContainer):
+      raise ExpressionError('Left value is not readable and writable')
+    
+    right: ReadableContainer = self.evaluate_expression(expression.right)
+    if not is_container_of_type(right, ReadableContainer):
+      raise ExpressionError('Right container is not readable')
+    
+    left_value = left.read()
+    right_value = right.read()
+
+    if self.is_value_of_type(left_value, NUMBER_TYPE) and self.is_value_of_type(right_value, NUMBER_TYPE):
+      left.write(round(left_value) ^ round(right_value))
+      return left
+    
+    raise TypeError(f'Binary operation {expression.operator.code} with types {get_value_type(left_value)} and {get_value_type(right_value)} is not supported')
+  
+  def evaluate_left_shift_and_assign_expression(self, expression: BinaryOperationExpression):
+    left: TransformContainer = self.evaluate_expression(expression.left)
+    if not is_container_of_type(left, TransformContainer):
+      raise ExpressionError('Left value is not readable and writable')
+    
+    right: ReadableContainer = self.evaluate_expression(expression.right)
+    if not is_container_of_type(right, ReadableContainer):
+      raise ExpressionError('Right container is not readable')
+    
+    left_value = left.read()
+    right_value = right.read()
+
+    if self.is_value_of_type(left_value, NUMBER_TYPE) and self.is_value_of_type(right_value, NUMBER_TYPE):
+      left.write(round(left_value) << round(right_value))
+      return left
+    
+    raise TypeError(f'Binary operation {expression.operator.code} with types {get_value_type(left_value)} and {get_value_type(right_value)} is not supported')
+  
+  def evaluate_right_shift_and_assign_expression(self, expression: BinaryOperationExpression):
+    left: TransformContainer = self.evaluate_expression(expression.left)
+    if not is_container_of_type(left, TransformContainer):
+      raise ExpressionError('Left value is not readable and writable')
+    
+    right: ReadableContainer = self.evaluate_expression(expression.right)
+    if not is_container_of_type(right, ReadableContainer):
+      raise ExpressionError('Right container is not readable')
+    
+    left_value = left.read()
+    right_value = right.read()
+    
+    if self.is_value_of_type(left_value, NUMBER_TYPE) and self.is_value_of_type(right_value, NUMBER_TYPE):
+      left.write(round(left_value) >> round(right_value))
+      return left
+    
+    raise TypeError(f'Binary operation {expression.operator.code} with types {get_value_type(left_value)} and {get_value_type(right_value)} is not supported')
+
+  def evaluate_or_expression(self, expression: BinaryOperationExpression):
+    left: ReadableContainer = self.evaluate_expression(expression.left)
+    if not is_container_of_type(left, ReadableContainer):
+      raise ExpressionError('Left value is not readable')
+    
+    # if left is true - return and skip right
+    if left.read(): return left
+
+    right: ReadableContainer = self.evaluate_expression(expression.right)
+    if not is_container_of_type(right, ReadableContainer):
+      raise ExpressionError('Right container is not readable')
+    
+    return right
+  
+  def evaluate_and_expression(self, expression: BinaryOperationExpression):
+    left: ReadableContainer = self.evaluate_expression(expression.left)
+    if not is_container_of_type(left, ReadableContainer):
+      raise ExpressionError('Left value is not readable')
+    
+    # if left is false - return and skip right
+    if not left.read(): return left
+
+    right: ReadableContainer = self.evaluate_expression(expression.right)
+    if not is_container_of_type(right, ReadableContainer):
+      raise ExpressionError('Right container is not readable')
+    
+    return right
+
+  def evaluate_equal_expression(self, expression: BinaryOperationExpression):
+    left: ReadableContainer = self.evaluate_expression(expression.left)
+    if not is_container_of_type(left, ReadableContainer):
+      raise ExpressionError('Left value is not readable')
+    
+    right: ReadableContainer = self.evaluate_expression(expression.right)
+    if not is_container_of_type(right, ReadableContainer):
+      raise ExpressionError('Right container is not readable')
+    
+    return self.create_readable_container(left.read() == right.read())
+  
+  def evaluate_not_equal_expression(self, expression: BinaryOperationExpression):
+    left: ReadableContainer = self.evaluate_expression(expression.left)
+    if not is_container_of_type(left, ReadableContainer):
+      raise ExpressionError('Left value is not readable')
+    
+    right: ReadableContainer = self.evaluate_expression(expression.right)
+    if not is_container_of_type(right, ReadableContainer):
+      raise ExpressionError('Right container is not readable')
+    
+    return self.create_readable_container(left.read() != right.read())
+  
+  def evaluate_greater_than_expression(self, expression: BinaryOperationExpression):
+    left: ReadableContainer = self.evaluate_expression(expression.left)
+    if not is_container_of_type(left, ReadableContainer):
+      raise ExpressionError('Left value is not readable')
+    
+    right: ReadableContainer = self.evaluate_expression(expression.right)
+    if not is_container_of_type(right, ReadableContainer):
+      raise ExpressionError('Right container is not readable')
+    
+    left_value = left.read()
+    right_value = right.read()
+    
+    if self.is_value_of_type(left_value, NUMBER_TYPE) and self.is_value_of_type(right_value, NUMBER_TYPE):
+      return self.create_readable_container(left_value > right_value)
+    
+    raise TypeError(f'Binary operation {expression.operator.code} with types {get_value_type(left_value)} and {get_value_type(right_value)} is not supported')
+  
+  def evaluate_less_than_expression(self, expression: BinaryOperationExpression):
+    left: ReadableContainer = self.evaluate_expression(expression.left)
+    if not is_container_of_type(left, ReadableContainer):
+      raise ExpressionError('Left value is not readable')
+    
+    right: ReadableContainer = self.evaluate_expression(expression.right)
+    if not is_container_of_type(right, ReadableContainer):
+      raise ExpressionError('Right container is not readable')
+    
+    left_value = left.read()
+    right_value = right.read()
+    
+    if self.is_value_of_type(left_value, NUMBER_TYPE) and self.is_value_of_type(right_value, NUMBER_TYPE):
+      return self.create_readable_container(left_value < right_value)
+    
+    raise TypeError(f'Binary operation {expression.operator.code} with types {get_value_type(left_value)} and {get_value_type(right_value)} is not supported')
+  
+  def evaluate_greater_than_or_equal_expression(self, expression: BinaryOperationExpression):
+    left: ReadableContainer = self.evaluate_expression(expression.left)
+    if not is_container_of_type(left, ReadableContainer):
+      raise ExpressionError('Left value is not readable')
+    
+    right: ReadableContainer = self.evaluate_expression(expression.right)
+    if not is_container_of_type(right, ReadableContainer):
+      raise ExpressionError('Right container is not readable')
+    
+    left_value = left.read()
+    right_value = right.read()
+    
+    if self.is_value_of_type(left_value, NUMBER_TYPE) and self.is_value_of_type(right_value, NUMBER_TYPE):
+      return self.create_readable_container(left_value >= right_value)
+    
+    raise TypeError(f'Binary operation {expression.operator.code} with types {get_value_type(left_value)} and {get_value_type(right_value)} is not supported')
+  
+  def evaluate_less_than_or_equal_expression(self, expression: BinaryOperationExpression):
+    left: ReadableContainer = self.evaluate_expression(expression.left)
+    if not is_container_of_type(left, ReadableContainer):
+      raise ExpressionError('Left value is not readable')
+    
+    right: ReadableContainer = self.evaluate_expression(expression.right)
+    if not is_container_of_type(right, ReadableContainer):
+      raise ExpressionError('Right container is not readable')
+    
+    left_value = left.read()
+    right_value = right.read()
+    
+    if self.is_value_of_type(left_value, NUMBER_TYPE) and self.is_value_of_type(right_value, NUMBER_TYPE):
+      return self.create_readable_container(left_value <= right_value)
+    
+    raise TypeError(f'Binary operation {expression.operator.code} with types {get_value_type(left_value)} and {get_value_type(right_value)} is not supported')
+  
   # fundamental expressions
   def evaluate_identifier_expression(self, expression: IdentifierExpression):
     return self.current_stack.get_container_by_name(expression.name)
@@ -78,6 +669,12 @@ class Interpreter:
     
     raise ExpressionError(f'Error during literal parsing: {expression.value}')
 
-  # utils
+
+  # creates anonymous readable containers for expression evaluations
   def create_readable_container(self, value):
     return ReadableContainer('', value)
+  
+  # check data types of values
+  def is_value_of_type(self, value, *types: list[str]):
+    return get_value_type(value) in types
+    

@@ -90,5 +90,5 @@ class AssociationExpression(Expression):
 
 
 # util to check if expression is of one of specified expressions
-def is_expression_of_class(expression: Expression, *expressions: list[Expression]):
+def is_expression_of_class(expression: Expression, *expressions: Expression):
   return isinstance(expression, tuple(expressions))

@@ -23,3 +23,7 @@ class WriteableContainer(Container):
 class TransformContainer(Container, ReadableContainer, WriteableContainer):
   def __init__(self, name, value):
     super().__init__(name, value)
+
+
+def is_container_of_type(container, *types: Container):
+  return container in types

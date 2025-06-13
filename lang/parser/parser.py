@@ -37,7 +37,7 @@ class Parser:
 
   # list of methods to match different statements
   # routes to other parse methods
-  def parse_statement(self, *terminators: list[Token]):
+  def parse_statement(self, *terminators: Token):
     # skip space symbols
     self.skip_tokens(SPACE_TOKEN, NEWLINE_TOKEN)
 
@@ -70,7 +70,7 @@ class Parser:
   # Methods to require standalone statements
   # Require tokens. Check before
 
-  def parse_variable_declaration(self, *terminators: list[Token]):
+  def parse_variable_declaration(self, *terminators: Token):
     # require VAR keyword
     self.require_token(map_keyword_to_token(VAR_KEYWORD))
     self.consume_current_token()
@@ -95,11 +95,14 @@ class Parser:
       self.skip_tokens(SPACE_TOKEN)
 
       expression = self.parse_expression(None, BASE_PRECEDENCE, NEWLINE_TOKEN, *terminators)
+      if is_expression_of_class(expression, NullExpression):
+        raise ParserError(f'Variable {identifier} has invalid initialization')
+
       return VariableDeclarationStatement(identifier, expression)
     
     # if other symbol - raise error
     raise ParserError('Invalid variable declaration')
-  def parse_constant_declaration(self, *terminators: list[Token]):
+  def parse_constant_declaration(self, *terminators: Token):
      # require CONST keyword
     self.require_token(map_keyword_to_token(CONST_KEYWORD))
     self.consume_current_token()
@@ -123,8 +126,11 @@ class Parser:
     self.skip_tokens(SPACE_TOKEN)
 
     initialization = self.parse_expression(None, BASE_PRECEDENCE, NEWLINE_TOKEN, *terminators)
+    if is_expression_of_class(initialization, NullExpression):
+      raise ParserError(f'Constant {identifier} has invalid initialization')
+
     return ConstantDeclarationStatement(identifier, initialization)
-  def parse_condition_statement(self, *terminators: list[Token]):
+  def parse_condition_statement(self, *terminators: Token):
     # start with IF keyword
     self.require_token(map_keyword_to_token(IF_KEYWORD))
     self.consume_current_token()
@@ -138,8 +144,10 @@ class Parser:
     self.consume_current_token()
 
     # parse parentheses expression
-    while not self.is_end() and not self.match_token(RIGHT_PARENTHESES_TOKEN):
-      condition = self.parse_expression(None, BASE_PRECEDENCE, RIGHT_PARENTHESES_TOKEN)
+    condition = self.parse_expression(None, BASE_PRECEDENCE, RIGHT_PARENTHESES_TOKEN)
+
+    if is_expression_of_class(condition, NullExpression):
+      raise ParserError('Condition statement has invalid expression in parentheses')
 
     self.skip_tokens(SPACE_TOKEN, NEWLINE_TOKEN)
 
@@ -155,7 +163,7 @@ class Parser:
     self.skip_tokens(SPACE_TOKEN, NEWLINE_TOKEN)
 
     # init ELSE statement
-    else_branch = None
+    else_branch = NullExpression()
 
     # init ELSE statement
     if self.match_token(map_keyword_to_token(ELSE_KEYWORD)):
@@ -169,7 +177,7 @@ class Parser:
 
     # return condition statement
     return ConditionStatement(condition, then_branch, else_branch)
-  def parse_for_statement(self, *terminators: list[Token]):
+  def parse_for_statement(self, *terminators: Token):
     # get FOR keyword
     self.require_token(map_keyword_to_token(FOR_KEYWORD))
     self.consume_current_token()
@@ -221,7 +229,7 @@ class Parser:
     body = self.parse_statement(*terminators)
 
     return ForStatement(initialization, condition, increment, body)
-  def parse_while_statement(self, *terminators: list[Token]):
+  def parse_while_statement(self, *terminators: Token):
     # start with WHILE keyword
     self.require_token(map_keyword_to_token(WHILE_KEYWORD))
     self.consume_current_token()
@@ -299,7 +307,7 @@ class Parser:
     body = self.parse_block_statement()
 
     return FunctionDeclarationStatement(name, parameters, body)
-  def parse_return_statement(self, *terminators: list[Token]):
+  def parse_return_statement(self, *terminators: Token):
     # require return
     self.require_token(map_keyword_to_token(RETURN_KEYWORD))
     self.consume_current_token()
@@ -309,9 +317,9 @@ class Parser:
     # compose return statement
     expression = self.parse_expression(None, BASE_PRECEDENCE, NEWLINE_TOKEN, *terminators)
     return ReturnStatement(expression)
-  def parse_class_declaration_statement(self):
+  def pse_class_declaration_statement(self):
     pass
-  def parse_import_statement(self, *terminators: list[Token]):
+  def parse_import_statement(self, *terminators: Token):
     # get IMPORT token
     self.require_token(map_keyword_to_token(IMPORT_KEYWORD))
     self.consume_current_token()
@@ -336,7 +344,7 @@ class Parser:
 
     # return import statement
     return ImportStatement(path, imports)
-  def parse_export_statement(self, *terminators: list[Token]):
+  def parse_export_statement(self, *terminators: Token):
     # require EXPORT keyword
     self.require_token(map_keyword_to_token(EXPORT_KEYWORD))
     self.consume_current_token()
@@ -369,7 +377,7 @@ class Parser:
       statements.append(self.parse_statement(RIGHT_CURLY_BRACE_TOKEN))
 
     raise ParserError(f'Expected token {RIGHT_CURLY_BRACE_TOKEN}')
-  def parse_expression_statement(self, *terminators: list[Token]):
+  def parse_expression_statement(self, *terminators: Token):
     return self.parse_expression(None, BASE_PRECEDENCE, NEWLINE_TOKEN, *terminators)
   def parse_comment(self):
     # require comment
@@ -740,7 +748,7 @@ class Parser:
     return False
   
   # to skip spaces until gets meaningful token
-  def skip_tokens(self, *tokens: list[Token]):
+  def skip_tokens(self, *tokens: Token):
     # while current token is in tokens list
     while self.match_token(*tokens):
       # move position forward
