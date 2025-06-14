@@ -651,6 +651,91 @@ class Interpreter:
     
     raise TypeError(f'Binary operation {expression.operator.code} with types {get_value_type(left_value)} and {get_value_type(right_value)} is not supported')
   
+  # grouping expressions
+  def evaluate_grouping_expression(self, expression: GroupingExpression):
+    pass
+
+  def evaluate_parentheses_expression(self, expression: GroupingExpression):
+    # parentheses without application indicate tuple literal
+    
+    elements = []
+
+    for exp in expression.expressions:
+      elements.append(self.evaluate_expression(exp))
+
+    return self.create_readable_container(tuple(elements))
+  
+  def evaluate_square_brackets_expression(self, expression: GroupingExpression):
+    # square brackets without application indicate LIST literal
+
+    elements = []
+
+    for exp in expression.expressions:
+      elements.append(self.evaluate_expression(exp))
+
+    return self.create_readable_container(elements)
+
+  # association expression
+  def evaluate_curly_braces_expression(self, expression: AssociationExpression):
+    # curly braces without application indicate OBJECT literal
+
+    obj = {}
+
+    # object keys can be strings and numbers
+    key_types = [STRING_TOKEN, NUMBER_TYPE]
+
+    # parse entries
+    for key, value in expression.entries:
+      # parse key
+
+      # handle string keys without quotes (allowed for object keys)
+      if is_expression_of_class(key, IdentifierExpression):
+        parsed_key: str = key.name
+
+      # handle literal keys
+      elif is_expression_of_class(key, LiteralExpression):
+        # validate key type
+        if not self.is_value_of_type(key.value, key_types):
+          raise SyntaxError('Invalid key expression')
+        
+        parsed_key: str = key.value
+      
+      # handle dynamic keys (in [])
+      elif is_expression_of_class(key, GroupingExpression):
+        key_container: ReadableContainer = self.evaluate_expression(key)
+        if not is_container_of_type(key_container, ReadableContainer):
+          raise SyntaxError('Key expression is not readable')
+        
+        key_value = key_container.read()
+        if not get_value_type(key_value, LIST_TYPE):
+          raise SyntaxError('Invalid key expression')
+        
+        # validate "list-like" expression length
+        if not len(key_value) == 1:
+          raise ExpressionError('Dynamic key expression must be evaluated as a literal')
+        
+        # get dynamic key
+        first_container: ReadableContainer = key_value[0]
+        if not is_container_of_type(first_container, ReadableContainer):
+          raise SyntaxError('Key expression is not readable')
+        
+        # validate key type
+        first_container_value = first_container.read()
+        if not self.is_value_of_type(first_container_value, *key_types):
+          raise SyntaxError(f'Key expression has to be literal but {get_value_type(first_container_value)} received')
+
+        parsed_key = first_container_value
+      
+      # parse value
+      value_container = self.evaluate_expression(value)
+      if not is_container_of_type(value_container, ReadableContainer):
+        raise ExpressionError('Value is not readable')
+      
+      # set parsed entry
+      obj[parsed_key] = value_container
+
+    return self.create_readable_container(obj)
+
   # fundamental expressions
   def evaluate_identifier_expression(self, expression: IdentifierExpression):
     return self.current_stack.get_container_by_name(expression.name)
@@ -677,4 +762,4 @@ class Interpreter:
   # check data types of values
   def is_value_of_type(self, value, *types: list[str]):
     return get_value_type(value) in types
-    
+  

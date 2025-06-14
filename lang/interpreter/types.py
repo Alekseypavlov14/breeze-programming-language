@@ -6,6 +6,7 @@ BOOLEAN_TYPE = 'BOOLEAN'
 
 OBJECT_TYPE = 'OBJECT'
 LIST_TYPE = 'LIST'
+TUPLE_TYPE = 'TUPLE'
 FUNCTION_TYPE = 'FUNCTION'
 
 # to compute value type
@@ -24,5 +25,7 @@ def get_value_type(value):
     return OBJECT_TYPE
   if isinstance(value, list):
     return LIST_TYPE
+  if isinstance(value, tuple):
+    return TUPLE_TYPE
   if callable(value):
     return FUNCTION_TYPE
