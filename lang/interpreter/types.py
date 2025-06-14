@@ -1,3 +1,4 @@
+# list of types
 NULL_TYPE = 'NULL'
 
 NUMBER_TYPE = 'NUMBER'
@@ -8,6 +9,9 @@ OBJECT_TYPE = 'OBJECT'
 LIST_TYPE = 'LIST'
 TUPLE_TYPE = 'TUPLE'
 FUNCTION_TYPE = 'FUNCTION'
+
+# types that are valid object keys
+OBJECT_KEY_TYPES = [STRING_TYPE, NUMBER_TYPE]
 
 # to compute value type
 def get_value_type(value):
