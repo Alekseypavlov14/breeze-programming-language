@@ -9,3 +9,7 @@ Resolution starts with getting entry module absolute path.
 Then module is parsed (AST is created) and the process repeats for dependency modules creating the dependency tree. (Only top-level **import** statements are valid).
 
 **Registry** class is a storage of application modules. It does not contain duplicated modules and circular dependencies while sorting.
+
+# Aliases
+
+Resolver receives **aliases dict** during initialization. All aliases start with ```@``` symbol.
