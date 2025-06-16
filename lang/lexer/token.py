@@ -19,6 +19,10 @@ class Token:
       raise LexerError(f'Token "{self.code}" has invalid type: {type}')
     self._type = type
 
+  # overload equality operator
+  def __eq__(self, other):
+    return self.type == other.type and self.code == other.code
+
   # defines mapping to string
   def __str__(self):
     return f"Token ({self.type}, {self.code!r})"
