@@ -1,3 +1,4 @@
+- 16.06.2025 - Added Interpreter
 - 03.06.2025 - Added Resolver to parse dependency graph and Registry for application modules
 - 02.06.2025 - Finished statement parsing in Parser
 - 01.06.2025 - Added Expression parsing in Parser
