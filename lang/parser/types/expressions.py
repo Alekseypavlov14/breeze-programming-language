@@ -88,6 +88,13 @@ class AssociationExpression(Expression):
 
     self.entries = entries
 
+# to be used only in functions
+class FunctionParameterExpression(Expression):
+  def __init__(self, name: Token, defaultValue: Expression):
+    super().__init__()
+
+    self.name = name
+    self.defaultValue = defaultValue
 
 # util to check if expression is of one of specified expressions
 def is_expression_of_class(expression: Expression, *expressions: Expression):

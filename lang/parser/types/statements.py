@@ -78,7 +78,7 @@ class ContinueStatement(Statement):
 
 # defines statement of function declaration
 class FunctionDeclarationStatement(Statement):
-  def __init__(self, name: Token, params: list[Expression], body: BlockStatement):
+  def __init__(self, name: Token, params: list[FunctionParameterExpression], body: BlockStatement):
     super().__init__()
 
     self.name = name

@@ -288,13 +288,17 @@ class Parser:
     self.consume_current_token()
 
     # get parameters
-    parameters = []
+    parameters: FunctionParameterExpression = []
 
     # parse parentheses expression
     while not self.is_end() and not self.match_token(RIGHT_PARENTHESES_TOKEN):
-      parameter = self.parse_expression(None, BASE_PRECEDENCE, RIGHT_PARENTHESES_TOKEN)
+      parameter = self.parse_function_parameter_expression()
       parameters.append(parameter)
 
+      # skip spaces
+      self.skip_tokens(SPACE_TOKEN, NEWLINE_TOKEN)
+
+    # skip spaces
     self.skip_tokens(SPACE_TOKEN, NEWLINE_TOKEN)
 
     # require close parentheses
@@ -307,6 +311,27 @@ class Parser:
     body = self.parse_block_statement()
 
     return FunctionDeclarationStatement(name, parameters, body)
+  def parse_function_parameter_expression(self):
+    self.skip_tokens(SPACE_TOKEN, NEWLINE_TOKEN)
+
+    # consume parameter name
+    self.require_token(IDENTIFIER_TOKEN)
+    parameter = self.consume_current_token()
+
+    self.skip_tokens(SPACE_TOKEN)
+
+    # init default value
+    defaultValue = None
+
+    # handle default value
+    if self.match_token(ASSIGN_TOKEN):
+      self.consume_current_token()
+      self.skip_tokens(SPACE_TOKEN)
+
+      # parse expression until comma or closing parentheses
+      defaultValue = self.parse_expression(None, BASE_PRECEDENCE, COMMA_TOKEN, RIGHT_PARENTHESES_TOKEN)
+    
+    return FunctionParameterExpression(parameter, defaultValue)
   def parse_return_statement(self, *terminators: Token):
     # require return
     self.require_token(map_keyword_to_token(RETURN_KEYWORD))
