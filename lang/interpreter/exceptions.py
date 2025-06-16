@@ -1,3 +1,5 @@
+from interpreter.containers import *
+
 # defines error for stack (no scopes)
 class StackError(Exception):
   def __init__(self, message = ''):
@@ -33,6 +35,11 @@ class ExpressionError(Exception):
   def __init__(self, message = ''):
     super().__init__(message)
 
+# defines function parameter exception
+class ParameterException(Exception):
+  def __init__(self, message = ''):
+    super().__init__(message)
+
 
 # inner tools built on exceptions
 class BreakException(Exception):
@@ -42,3 +49,9 @@ class BreakException(Exception):
 class ContinueException(Exception):
   def __init__(self):
     super().__init__('Incorrect continue usage')
+
+class ReturnException(Exception):
+  def __init__(self, value: Container):
+    super().__init__('Incorrect return usage')
+
+    self.value = value

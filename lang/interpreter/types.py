@@ -1,3 +1,5 @@
+from interpreter.stack import *
+
 # list of types
 NULL_TYPE = 'NULL'
 
@@ -8,10 +10,18 @@ BOOLEAN_TYPE = 'BOOLEAN'
 OBJECT_TYPE = 'OBJECT'
 LIST_TYPE = 'LIST'
 TUPLE_TYPE = 'TUPLE'
+
 FUNCTION_TYPE = 'FUNCTION'
 
 # types that are valid object keys
 OBJECT_KEY_TYPES = [STRING_TYPE, NUMBER_TYPE]
+
+# function type stored in container
+# closure represents stack where the function was declared
+class FunctionValue:
+  def __init__(self, callable, closure: Stack):
+    self.callable = callable
+    self.closure = closure
 
 # to compute value type
 def get_value_type(value):
@@ -31,5 +41,6 @@ def get_value_type(value):
     return LIST_TYPE
   if isinstance(value, tuple):
     return TUPLE_TYPE
-  if callable(value):
+  
+  if isinstance(value, FunctionValue):
     return FUNCTION_TYPE

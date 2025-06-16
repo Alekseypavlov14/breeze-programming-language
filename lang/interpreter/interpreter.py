@@ -71,6 +71,12 @@ class Interpreter:
       return self.execute_while_statement(statement)
     if is_statement_of_class(statement, ForStatement):
       return self.execute_for_statement(statement)
+    if is_statement_of_class(statement, BreakStatement):
+      return self.execute_break_statement(statement)
+    if is_statement_of_class(statement, FunctionDeclarationStatement):
+      return self.execute_function_declaration_statement(statement)
+    if is_statement_of_class(statement, ReturnStatement):
+      return self.execute_return_statement(statement)
     if is_statement_of_class(statement, ExpressionStatement):
       return self.execute_expression_statement(statement)
   
@@ -156,6 +162,107 @@ class Interpreter:
         continue
 
       self.evaluate_expression(statement.increment)
+
+  def execute_break_statement(self, statement: BreakStatement):
+    raise BreakException() # will be handled in loop
+  
+  def execute_continue_statement(self, statement: ContinueStatement):
+    raise ContinueException() # will be handled in loop
+
+  def execute_function_declaration_statement(self, statement: FunctionDeclarationStatement):
+    # remember current stack as reference
+    closure = self.current_stack
+
+    # create function callable
+    def declared_function(arguments: list[ReadableContainer]):
+      # validate arguments containers
+      for argument in arguments:
+        if not is_container_of_type(argument, ReadableContainer):
+          raise ExpressionError('Argument is not readable')
+
+      parameters_amount = len(statement.params)
+      required_parameters_amount = parameters_amount
+      passed_arguments = len(arguments)
+
+      # flag that indicates that all next parameters are optional
+      optional_argument_found = False
+
+      # mention that parameters with default values are optional
+      for param in statement.params:
+        # prevent required parameter follow optional
+        if not param.defaultValue and optional_argument_found:
+          raise ParameterException('Required argument cannot follow optional one')
+
+        if param.defaultValue:  
+          required_parameters_amount -= 1
+          optional_argument_found = True
+        
+      # check if arguments are less than enough
+      if passed_arguments < required_parameters_amount:
+        raise ValueError(f'{required_parameters_amount} parameters are required but {passed_arguments} are received')
+
+      # check if arguments are more than possible 
+      if passed_arguments > parameters_amount:
+        raise ValueError(f'{parameters_amount} can be passed but {passed_arguments} are received')
+      
+      # remember origin stack where function was called
+      origin_stack = self.current_stack
+
+      # switch scope to function closure
+      self.current_stack = closure
+      # create scope for function
+      self.current_stack.add_scope()
+
+      # initialize parameters
+      for param_index in range(statement.params):
+        param = statement.params[param_index]
+
+        # compute argument value
+        if param_index < passed_arguments:
+          # assign passed value
+          value: ReadableContainer = arguments[param_index]
+        else:
+          # evaluate default value
+          value: ReadableContainer = self.evaluate_expression(statement.params[param_index].defaultValue)
+          if not is_container_of_type(value, ReadableContainer):
+            raise ExpressionError('Default value is not readable')
+          
+        # compose parameter as variable
+        parameter_container = TransformContainer(param.name, value.read())
+
+        # save variable
+        self.current_stack.add_container(parameter_container)
+
+      # initialize returned value
+      returned_value = self.create_readable_container(None)
+
+      # execute function
+      try:
+        self.execute_statement(statement.body)
+      except ReturnException as returned:
+        # read function return value
+        returned_value = returned.value
+
+        if not is_container_of_type(returned_value, ReadableContainer):
+          raise ExpressionError('Returned value is not readable')
+
+      # clear function scope
+      self.current_stack.remove_scope()
+      # switch scope back to origin
+      self.current_stack = origin_stack
+
+      return returned_value
+
+    # create container
+    function_value: FunctionValue = FunctionValue(declared_function, closure)
+    function_container = TransformContainer(statement.name, function_value)
+
+    # save function
+    self.current_stack.add_container(function_container)
+
+  def execute_return_statement(self, statement: ReturnStatement):
+    returned_container = self.evaluate_expression(statement.returns)
+    raise ReturnException(returned_container) # will be caught by function
 
   def execute_expression_statement(self, statement: ExpressionStatement):
     return self.evaluate_expression(statement.expression)
@@ -353,7 +460,7 @@ class Interpreter:
 
     # handle number addition
     if self.is_value_of_type(left_value, NUMBER_TYPE) and self.is_value_of_type(right_value, NUMBER_TYPE):
-      return self.create_readable_container(left.value + right_value)
+      return self.create_readable_container(left_value + right_value)
     
     # handle string concatenation
     if self.is_value_of_type(left_value, STRING_TYPE) and self.is_value_of_type(right_value, STRING_TYPE):
@@ -375,7 +482,7 @@ class Interpreter:
 
     # handle number subtraction
     if self.is_value_of_type(left_value, NUMBER_TYPE) and self.is_value_of_type(right_value, NUMBER_TYPE):
-      return self.create_readable_container(left.value - right_value)
+      return self.create_readable_container(left_value - right_value)
     
     raise TypeError(f'Binary operation {expression.operator.code} with types {get_value_type(left_value)} and {get_value_type(right_value)} is not supported')
 
@@ -393,7 +500,7 @@ class Interpreter:
 
     # handle number multiplication
     if self.is_value_of_type(left_value, NUMBER_TYPE) and self.is_value_of_type(right_value, NUMBER_TYPE):
-      return self.create_readable_container(left.value * right_value)
+      return self.create_readable_container(left_value * right_value)
     
     raise TypeError(f'Binary operation {expression.operator.code} with types {get_value_type(left_value)} and {get_value_type(right_value)} is not supported')
 
@@ -414,7 +521,7 @@ class Interpreter:
       if right_value == 0:
         raise ValueError('Division by zero is not allowed')
       
-      return self.create_readable_container(left.value / right_value)
+      return self.create_readable_container(left_value / right_value)
     
     raise TypeError(f'Binary operation {expression.operator.code} with types {get_value_type(left_value)} and {get_value_type(right_value)} is not supported')
 
@@ -435,7 +542,7 @@ class Interpreter:
       if left_value < 0:
         raise ValueError('Exponential with negative base is not allowed')
       
-      return self.create_readable_container(left.value ** right_value)
+      return self.create_readable_container(left_value ** right_value)
     
     raise TypeError(f'Binary operation {expression.operator.code} with types {get_value_type(left_value)} and {get_value_type(right_value)} is not supported')
 
@@ -453,7 +560,7 @@ class Interpreter:
 
     # handle remainder
     if self.is_value_of_type(left_value, NUMBER_TYPE) and self.is_value_of_type(right_value, NUMBER_TYPE):
-      return self.create_readable_container(left.value % right_value)
+      return self.create_readable_container(left_value % right_value)
     
     raise TypeError(f'Binary operation {expression.operator.code} with types {get_value_type(left_value)} and {get_value_type(right_value)} is not supported')
 
@@ -915,7 +1022,7 @@ class Interpreter:
     if not is_container_of_type(left, ReadableContainer):
       raise ExpressionError('Left value is not readable')
     
-    left_value = left.read()
+    left_value: FunctionValue = left.read()
     if not self.is_value_of_type(left_value, FUNCTION_TYPE):
       raise ValueError(f'{left_value} is not callable')
     
@@ -933,10 +1040,10 @@ class Interpreter:
       if not is_container_of_type(argument, ReadableContainer):
         raise ExpressionError('Argument is not readable')
 
-      arguments.append(argument.read())
+      arguments.append(argument)
 
     # execute function
-    return_value = left_value(*arguments)
+    return_value = left_value.callable(*arguments)
 
     return self.create_readable_container(return_value)
 

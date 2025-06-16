@@ -9,6 +9,10 @@ The object of this class has a list of **Scopes** and each scope has a list of *
 
 Scopes are created and deleted during the application. After scope is deleted, all declarations in it are also deleted.
 
-# Logic
+# Logic of consecutive execution
 
-Each module is executed with its own stack and then the pointer to current module and current stack is changed. 
+Each module is executed with its own stack and then the pointer to current module and current stack is changed. Stacks are saved after module is executed.
+
+# Module execution
+
+Module is executed recursively by executing statements and evaluating expressions. **Containers** are returned as a result of expressions evaluation.
