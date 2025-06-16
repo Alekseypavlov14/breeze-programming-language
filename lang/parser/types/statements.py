@@ -116,5 +116,5 @@ class ExportStatement(Statement):
 
 
 # utils to check if statement belongs to one specified classes
-def is_statement_of_class(statement, *statements: list[Statement]):
+def is_statement_of_class(statement, *statements: Statement):
   return isinstance(statement, tuple(statements))

@@ -378,7 +378,8 @@ class Parser:
 
     raise ParserError(f'Expected token {RIGHT_CURLY_BRACE_TOKEN}')
   def parse_expression_statement(self, *terminators: Token):
-    return self.parse_expression(None, BASE_PRECEDENCE, NEWLINE_TOKEN, *terminators)
+    expression = self.parse_expression(None, BASE_PRECEDENCE, NEWLINE_TOKEN, *terminators)
+    return ExpressionStatement(expression)
   def parse_comment(self):
     # require comment
     self.require_token(COMMENT_TOKEN)

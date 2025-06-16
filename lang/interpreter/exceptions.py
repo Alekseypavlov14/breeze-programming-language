@@ -23,7 +23,22 @@ class SyntaxError(Exception):
   def __init__(self, message = ''):
     super().__init__(message)
 
+# defines error for invalid statement 
+class StatementError(Exception):
+  def __init__(self, message = ''):
+    super().__init__(message)
+
 # defines error during expression evaluation
 class ExpressionError(Exception):
   def __init__(self, message = ''):
     super().__init__(message)
+
+
+# inner tools built on exceptions
+class BreakException(Exception):
+  def __init__(self):
+    super().__init__('Incorrect break usage')
+
+class ContinueException(Exception):
+  def __init__(self):
+    super().__init__('Incorrect continue usage')

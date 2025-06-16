@@ -31,7 +31,7 @@ class Interpreter:
     # using imported functions requires switching the stack
     self.current_stack: Stack | None = None
 
-  # method to load app modules to application
+  # method to load app modules to application (sorted)
   # creates stack for each module
   def load_modules(self, modules: list[Module]):
     # set modules list
@@ -41,19 +41,131 @@ class Interpreter:
 
   # method that executes the list of modules
   def execute(self):
-    pass
+    # initialize pointer
+    self.current_module_index = 0
+
+    # execute each module
+    for module in self.modules:
+      # define aliases
+      self.current_module = self.modules[self.current_module_index]
+      self.current_stack = self.stacks[self.current_module_index]
+
+      # execute module
+      self.execute_statement(module.content)
+
+      # go to next module
+      self.current_module_index += 1
 
   # execute statements
 
-  def execute_statement(self):
-    pass
+  def execute_statement(self, statement: Statement):
+    if is_statement_of_class(statement, BlockStatement):
+      return self.execute_block_statement(statement)
+    if is_statement_of_class(statement, VariableDeclarationStatement):
+      return self.execute_variable_declaration_statement(statement)
+    if is_statement_of_class(statement, ConstantDeclarationStatement):
+      return self.execute_constant_declaration_statement(statement)
+    if is_statement_of_class(statement, ConditionStatement):
+      return self.execute_condition_statement(statement)
+    if is_statement_of_class(statement, WhileStatement):
+      return self.execute_while_statement(statement)
+    if is_statement_of_class(statement, ForStatement):
+      return self.execute_for_statement(statement)
+    if is_statement_of_class(statement, ExpressionStatement):
+      return self.execute_expression_statement(statement)
+  
+    raise StatementError('Invalid statement is used')
+
+  def execute_block_statement(self, statement: BlockStatement):
+    # block of statements has new scope
+    self.current_stack.add_scope()
+
+    for stat in statement.statements:
+      self.execute_statement(stat)
+
+    # remove scope afterwards
+    self.current_stack.remove_scope()
+
+  def execute_variable_declaration_statement(self, statement: VariableDeclarationStatement):
+    if statement.initialization:
+      initialization: ReadableContainer = self.evaluate_expression(statement.initialization)
+      if not is_container_of_type(initialization, ReadableContainer):
+        raise ValueError('Variable initializer is not readable')
+
+    variable_container = TransformContainer(statement.name, initialization.read())
+    self.current_stack.add_container(variable_container)
+
+  def execute_constant_declaration_statement(self, statement: ConstantDeclarationStatement):
+    initialization: ReadableContainer = self.evaluate_expression(statement.initialization)
+    if not is_container_of_type(initialization, ReadableContainer):
+      raise ValueError('Constant initializer is not readable')
+    
+    constant_container = ReadableContainer(statement.name, initialization.read())
+    self.current_stack.add_container(constant_container)
+
+  def execute_condition_statement(self, statement: ConditionStatement):
+    condition: ReadableContainer = self.evaluate_expression(statement.condition)
+    if not is_container_of_type(condition, ReadableContainer):
+      raise ExpressionError('Condition is not a readable container')
+
+    if condition.read():
+      self.execute_statement(statement.then_branch)
+
+    elif statement.else_branch:
+      self.execute_statement(statement.else_branch)
+
+  def execute_while_statement(self, statement: WhileStatement):
+    while True:
+      condition: ReadableContainer = self.evaluate_expression(statement.condition)
+      if not is_container_of_type(condition, ReadableContainer):
+        raise ExpressionError('Condition is not readable')
+      
+      if not condition.read():
+        break
+
+      # handle breaks and continues
+      try:
+        self.execute_statement(statement.body)
+
+      except BreakException:
+        break
+      except ContinueException:
+        continue
+
+  def execute_for_statement(self, statement: ForStatement):
+    self.current_stack.add_scope()
+
+    self.execute_statement(statement.initializer)
+
+    while True:
+      condition: ReadableContainer = self.evaluate_expression(statement.condition)
+      if not is_container_of_type(condition, ReadableContainer):
+        raise ExpressionError('Condition is not readable')
+      
+      if not condition.read():
+        break
+
+      # handle breaks and continues
+      try:
+        self.execute_statement(statement.body)
+
+      except BreakException:
+        break
+      except ContinueException:
+        self.evaluate_expression(statement.increment)
+        continue
+
+      self.evaluate_expression(statement.increment)
+
+  def execute_expression_statement(self, statement: ExpressionStatement):
+    return self.evaluate_expression(statement.expression)
 
   # evaluate expressions
   
   # this methods delegates evaluation based on expression type
   def evaluate_expression(self, expression: Expression):
     if is_expression_of_class(expression, NullExpression):
-      return
+      return self.create_readable_container(None)
     if is_expression_of_class(expression, LiteralExpression):
       return self.evaluate_literal_expression(expression)
     if is_expression_of_class(expression, IdentifierExpression):

@@ -8,17 +8,17 @@ class Stack:
     self.scopes: list[Scope] = []
 
   def add_scope(self):
-    self.scopes.append(Scope)
+    self.scopes.append(Scope())
 
   def remove_scope(self):
     self.scopes.pop()
 
   # adds container to last scope
-  def add_container(self, container):
+  def add_container(self, container: Container):
     if not len(self.scopes):
       raise StackError('No scopes available!')
 
-    self.scopes[len(self.scopes) - 1].add_container(container)
+    self.scopes[-1].add_container(container)
 
   # gets container searching from last to first scope
   def get_container_by_name(self, name):
@@ -59,7 +59,7 @@ class Scope:
   def __init__(self):
     self.containers: list[Container] = []
 
-  def add_container(self, container):
+  def add_container(self, container: Container):
     self.containers.append(container)
 
   # returns tuple with container|None and boolean indicating if the container is found

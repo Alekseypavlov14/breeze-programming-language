@@ -20,10 +20,10 @@ class WriteableContainer(Container):
     self.value = value
 
 # both readable and writeable
-class TransformContainer(Container, ReadableContainer, WriteableContainer):
+class TransformContainer(ReadableContainer, WriteableContainer):
   def __init__(self, name, value):
     super().__init__(name, value)
 
 
 def is_container_of_type(container, *types: Container):
-  return container in types
+  return isinstance(container, tuple(types))
