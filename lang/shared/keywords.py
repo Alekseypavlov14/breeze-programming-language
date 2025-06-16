@@ -69,4 +69,3 @@ KEYWORDS = [
 def map_keyword_to_token(keyword: str):
   # tokens are tuples (name, regex)
   return (keyword, keyword)
-

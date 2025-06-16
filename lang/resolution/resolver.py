@@ -1,23 +1,28 @@
 from resolution.module import *
 from resolution.registry import *
 from resolution.exceptions import *
+from resolution.aliases import *
 from parser.parser import *
 from lexer.lexer import *
 from shared.extensions import *
 
 import os
+import re
 
 # this class receives entry module path and gets all its dependencies recursively.
 # Instance has Lexer, Parser and Registry instances as fields to perform operations.
+# Instance has aliases field which is dictionary (str -> str)
 # it provides modules being topologically sorted (based on their dependencies).
 # Topological sort is required to execute modules in correct order.
 # Circular dependencies are not allowed!
 class Resolver:
-  def __init__(self):
+  def __init__(self, aliases = dict()):
     # instances required for operations
     self.lexer = Lexer()
     self.parser = Parser()
     self.registry = Registry()
+    # aliases dict
+    self.aliases: dict = aliases
 
   # this method receives the ABSOLUTE path to entry point module
   # It recursively receives modules dependencies and adds them to Registry
@@ -127,11 +132,32 @@ class Resolver:
     return Module(path, ast)    
 
   # allows to get absolute path of dependency module
+  # aliases are resolved in this method
   # base_path represents the ABSOLUTE path of dependent module (importer)
   # path represents the RELATIVE path to dependency module (exporter)
   def resolve_absolute_path(self, base_path: str, path: str) -> str:
     base_directory = os.path.dirname(base_path)
-    dependency_path = os.path.join(base_directory, path)
+
+    # resolve alias path
+    if path.startswith(ALIAS_SYMBOL):
+      # flag that indicates if alias is resolved
+      resolved = False
+
+      # check all aliases
+      for alias, full in self.aliases.items():
+        # resolve matched alias
+        if path.startswith(f'{ALIAS_SYMBOL}{alias}'):
+          dependency_path = re.sub(f"^{ALIAS_SYMBOL}{alias}", full, path)
+          resolved = True
+          break 
+
+      if not resolved:
+        raise ResolutionError(f'Undefined alias is used: {path}')
+          
+    # handle default path
+    else:
+      dependency_path = os.path.join(base_directory, path)
+    
     # returns resolved absolute path without symbolic links
     return os.path.realpath(dependency_path)
 
