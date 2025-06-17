@@ -15,6 +15,6 @@ path = "C:/Users/User/Desktop/programming language/examples/test_0.0.1.br"
 resolver = Resolver(aliases)
 resolver.resolve_modules(path)
 modules = resolver.sort_modules()
-interpreter = Interpreter()
+interpreter = Interpreter(resolver)
 interpreter.load_modules(modules)
 interpreter.execute()

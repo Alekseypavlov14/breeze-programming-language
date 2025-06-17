@@ -36,7 +36,12 @@ class ExpressionError(Exception):
     super().__init__(message)
 
 # defines function parameter exception
-class ParameterException(Exception):
+class ParameterError(Exception):
+  def __init__(self, message = ''):
+    super().__init__(message)
+
+# defines import error
+class ImportError(Exception):
   def __init__(self, message = ''):
     super().__init__(message)
 

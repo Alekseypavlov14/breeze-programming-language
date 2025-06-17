@@ -58,7 +58,7 @@ class Parser:
     if self.match_return_statement():
       return self.parse_return_statement()
     if self.match_import_statement():
-      return self.parse_import_statement(*terminators)
+      return self.parse_import_statement()
     if self.match_export_statement():
       return self.parse_export_statement(*terminators)
     if self.match_block_statement():
@@ -344,7 +344,7 @@ class Parser:
     return ReturnStatement(expression)
   def pse_class_declaration_statement(self):
     pass
-  def parse_import_statement(self, *terminators: Token):
+  def parse_import_statement(self):
     # get IMPORT token
     self.require_token(map_keyword_to_token(IMPORT_KEYWORD))
     self.consume_current_token()
@@ -352,10 +352,41 @@ class Parser:
     # skip spaces
     self.skip_tokens(SPACE_TOKEN)
 
-    # parse curly brace block statements
-    block = self.parse_block_statement()
-    # get imports
-    imports = block.statements
+    # initialize imports
+    imports: list[Token] = []
+
+    # parse curly brace imports
+    if self.match_token(LEFT_CURLY_BRACE_TOKEN):
+      # consume curly brace
+      self.consume_current_token()
+
+      # skip tokens
+      self.skip_tokens(SPACE_TOKEN, NEWLINE_TOKEN)
+
+      while not self.match_token(RIGHT_CURLY_BRACE_TOKEN):
+        # require comma separator
+        if (len(imports)):
+          self.require_token(COMMA_TOKEN)
+          self.consume_current_token()
+
+        # expect named import in curly braces
+        self.require_token(IDENTIFIER_TOKEN)
+        
+        # get named import
+        import_item = self.consume_current_token()
+
+        # append named import
+        imports.append(import_item)
+
+        self.skip_tokens(SPACE_TOKEN, NEWLINE_TOKEN)
+
+      # consume closing curly brace
+      self.consume_current_token()
+
+    # parse asterisk (*) import
+    elif self.match_token(MULTIPLICATION_TOKEN):
+      asterisk = self.consume_current_token()
+      imports.append(asterisk)
 
     # skip spaces
     self.skip_tokens(SPACE_TOKEN)
@@ -364,8 +395,17 @@ class Parser:
     self.require_token(map_keyword_to_token(FROM_KEYWORD))
     self.consume_current_token()
 
-    # parse from content
-    path = self.parse_expression(None, BASE_PRECEDENCE, NEWLINE_TOKEN, *terminators)
+    self.skip_tokens(SPACE_TOKEN)
+
+    # parse path
+    self.require_token(STRING_TOKEN)
+    path = self.consume_current_token()
+
+    self.skip_tokens(SPACE_TOKEN)
+
+    # require NEWLINE
+    self.require_token(NEW_KEYWORD)
+    self.consume_current_token()
 
     # return import statement
     return ImportStatement(path, imports)
@@ -630,12 +670,15 @@ class Parser:
 
       # parse expressions until reach closing operator
       while not self.match_token(closing_operator):
+        # require comma separator
+        if len(expressions):
+          self.require_token(COMMA_TOKEN)
+          self.consume_current_token()
+
         # add found expression
         expressions.append(self.parse_expression(None, BASE_PRECEDENCE, *grouping_terminators))
 
-        # consume possible comma
-        if self.match_token(COMMA_TOKEN):
-          self.consume_current_token()
+        self.skip_tokens(SPACE_TOKEN, NEWLINE_TOKEN)
 
       # validate expressions
       if len(expressions):
@@ -695,6 +738,11 @@ class Parser:
       entries: list[tuple[Expression, Expression]] = []
 
       while not self.match_token(RIGHT_CURLY_BRACE_TOKEN):
+        # require comma separator
+        if len(entries):
+          self.require_token(COMMA_TOKEN)
+          self.consume_current_token()
+
         # parse key expression
         # search until association closing or colon
         key_expression = self.parse_expression(None, BASE_PRECEDENCE, RIGHT_CURLY_BRACE_TOKEN, COLON_TOKEN)
@@ -716,9 +764,7 @@ class Parser:
         # append entry
         entries.append((key_expression, value_expression))
 
-        # consume possible comma
-        if self.match_token(COMMA_TOKEN):
-          self.consume_current_token()
+        self.skip_tokens(SPACE_TOKEN, NEWLINE_TOKEN)
 
       # validate expressions
       if len(expressions):

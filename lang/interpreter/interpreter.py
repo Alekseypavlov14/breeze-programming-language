@@ -3,6 +3,7 @@ from interpreter.exports import *
 from interpreter.exceptions import *
 from interpreter.types import *
 
+from resolution.resolver import *
 from resolution.module import *
 
 from lib.module import *
@@ -22,7 +23,10 @@ BASE_DEPTH = 0
 # contains list of Stacks that save values created during execution
 # handles imports and exports
 class Interpreter:
-  def __init__(self):
+  def __init__(self, resolver: Resolver):
+    # resolver instance
+    self.resolver = resolver
+
     # modules of application
     self.modules: list[Module] = []
     # list of stacks for each module
@@ -239,7 +243,7 @@ class Interpreter:
       for param in statement.params:
         # prevent required parameter follow optional
         if not param.defaultValue and optional_argument_found:
-          raise ParameterException('Required argument cannot follow optional one')
+          raise ParameterError('Required argument cannot follow optional one')
 
         if param.defaultValue:  
           required_parameters_amount -= 1
@@ -319,7 +323,46 @@ class Interpreter:
     if depth > 0:
       raise ExpressionError('Imports are only allowed on global level')
 
-    # TODO: parse import
+    # resolve dependency absolute path
+    dependency_path = self.resolver.resolve_absolute_path(self.current_module.path, statement.path)
+
+    # search module by ABSOLUTE path among resolved modules
+    for index in range(len(self.modules)):
+      if self.modules[index].path == dependency_path:
+        dependency_module_index = index
+
+        break
+      
+    # get dependency exports registry
+    exports = self.exports[dependency_module_index]
+
+    # load all imports
+    for import_item in statement.imports:
+      # check if asterisk import is used
+      if is_token_of_type(import_item, MULTIPLICATION_TOKEN):
+        # import everything
+        for container in exports.containers:
+          # check container
+          if not is_container_of_type(container, ReadableContainer):
+            raise ImportError(f'Symbol {import_item} is not exported by module {dependency_path}')
+
+          # make constant container copy
+          readable = ReadableContainer(container.name, container.read())
+          # add constant to stack
+          self.current_stack.add_container(readable)
+
+        # do not check other imports if asterisk is in list
+        break
+
+      # resolve named import item
+      container = exports.get_container_by_name(import_item.code)
+      if not container:
+        raise ImportError(f'Symbol {import_item} is not exported by module {dependency_path}')
+      
+      # make constant container copy
+      readable = ReadableContainer(container.name, container.read())
+      # add constant to stack
+      self.current_stack.add_container(readable)
 
   def execute_export_statement(self, statement: ExportStatement, depth: int):
     # validate depth

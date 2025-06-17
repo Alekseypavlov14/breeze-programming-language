@@ -101,7 +101,7 @@ class ClassDeclarationStatement(Statement):
 
 # defines import statement 
 class ImportStatement(Statement):
-  def __init__(self, path: LiteralExpression, imports: list[Expression]):
+  def __init__(self, path: LiteralExpression, imports: list[Token]):
     super().__init__()
 
     self.path = path
