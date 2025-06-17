@@ -1,4 +1,5 @@
 from interpreter.stack import *
+from interpreter.exports import *
 from interpreter.exceptions import *
 from interpreter.types import *
 
@@ -26,6 +27,8 @@ class Interpreter:
     self.modules: list[Module] = []
     # list of stacks for each module
     self.stacks: list[Stack] = []
+    # list of Exports for each module
+    self.exports: list[Exports] = []
 
     # alias for current executing module
     # order of execution is defined by Resolver
@@ -38,6 +41,10 @@ class Interpreter:
     # using imported functions requires switching the stack
     self.current_stack: Stack | None = None
 
+    # alias for current exports
+    # exported declarations will be added to this instance
+    self.current_exports: Exports | None = None
+
   # method to load app modules to application (sorted)
   # creates stack for each module
   def load_modules(self, modules: list[Module]):
@@ -45,6 +52,8 @@ class Interpreter:
     self.modules = modules
     # create stacks for each module
     self.stacks = [Stack() for _ in modules]
+    # create exports for each module
+    self.exports = [Exports() for _ in modules]
 
   # method that executes the list of modules
   def execute(self):
@@ -56,6 +65,7 @@ class Interpreter:
       # define aliases
       self.current_module = self.modules[self.current_module_index]
       self.current_stack = self.stacks[self.current_module_index]
+      self.current_exports = self.exports[self.current_module_index]
 
       # execute module
       self.execute_module(module)
@@ -103,6 +113,10 @@ class Interpreter:
       return self.execute_function_declaration_statement(statement, depth)
     if is_statement_of_class(statement, ReturnStatement):
       return self.execute_return_statement(statement)
+    if is_statement_of_class(statement, ImportStatement):
+      return self.execute_import_statement(statement, depth)
+    if is_statement_of_class(statement, ExportStatement):
+      return self.execute_export_statement(statement, depth)
     if is_statement_of_class(statement, ExpressionStatement):
       return self.execute_expression_statement(statement)
   
@@ -131,6 +145,8 @@ class Interpreter:
     variable_container = TransformContainer(statement.name.code, initialization.read())
     self.current_stack.add_container(variable_container)
 
+    return variable_container
+
   def execute_constant_declaration_statement(self, statement: ConstantDeclarationStatement):
     initialization: ReadableContainer = self.evaluate_expression(statement.initialization)
     if not is_container_of_type(initialization, ReadableContainer):
@@ -138,6 +154,8 @@ class Interpreter:
     
     constant_container = ReadableContainer(statement.name.code, initialization.read())
     self.current_stack.add_container(constant_container)
+
+    return constant_container
 
   def execute_condition_statement(self, statement: ConditionStatement, depth: int):
     condition: ReadableContainer = self.evaluate_expression(statement.condition)
@@ -290,15 +308,31 @@ class Interpreter:
     # save function
     self.current_stack.add_container(function_container)
 
+    return function_container
+
   def execute_return_statement(self, statement: ReturnStatement):
     returned_container = self.evaluate_expression(statement.returns)
     raise ReturnException(returned_container) # will be caught by function
 
-  def execute_import_statement(self, statement: ImportStatement):
-    return
-  
-  def execute_export_statement(self, statement: ExportStatement):
-    return
+  def execute_import_statement(self, statement: ImportStatement, depth: int):
+    # check statement depth
+    if depth > 0:
+      raise ExpressionError('Imports are only allowed on global level')
+
+    # TODO: parse import
+
+  def execute_export_statement(self, statement: ExportStatement, depth: int):
+    # validate depth
+    if depth > 0:
+      raise ExpressionError('Exports are only allowed on global level')
+    
+    # execute statement
+    container: ReadableContainer = self.execute_statement(statement, depth)
+    if not is_container_of_type(container, ReadableContainer):
+      raise ExpressionError('Invalid export statement')
+
+    # add container to exports
+    self.current_exports.add_container(container)
 
   def execute_expression_statement(self, statement: ExpressionStatement):
     return self.evaluate_expression(statement.expression)

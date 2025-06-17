@@ -379,6 +379,17 @@ class Parser:
     # get export statement
     exports = self.parse_statement(NEWLINE_TOKEN, *terminators)
 
+    # allowed exports
+    allowed_exports = [
+      ConstantDeclarationStatement,
+      FunctionDeclarationStatement,
+      ClassDeclarationStatement,
+    ]
+
+    # validate export statement
+    if not is_statement_of_class(exports, *allowed_exports):
+      raise ParserError('Invalid export statement')
+
     return ExportStatement(exports)
   def parse_block_statement(self):
     # get left curly brace

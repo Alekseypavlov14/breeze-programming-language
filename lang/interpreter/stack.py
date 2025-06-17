@@ -29,9 +29,9 @@ class Stack:
     reversed_scopes.reverse()
 
     for scope in reversed_scopes:
-      container, found = scope.get_container_by_name(name)
+      container = scope.get_container_by_name(name)
 
-      if found: 
+      if container: 
         return container
 
     raise NameError(f'{name} is not found!')
@@ -73,15 +73,21 @@ class Scope:
     self.containers: list[Container] = []
 
   def add_container(self, container: Container):
+    if self.is_container_added(container.name):
+      raise NameError(f'The symbol "{container.name}" is already declared')
+    
     self.containers.append(container)
 
-  # returns tuple with container|None and boolean indicating if the container is found
+  def is_container_added(self, name: str):
+    return bool(self.get_container_by_name(name))
+
+  # return None is container is not found
   def get_container_by_name(self, name):
     for container in self.containers:
       if container.name == name:
-        return (container, True)
+        return container
       
-    return (None, False)
+    return None
 
   # returns boolean indicating if container was deleted
   def remove_container_by_name(self, name):
@@ -93,6 +99,7 @@ class Scope:
         rest_containers.append(container)
       else:
         is_deleted = True
+        break
 
     self.containers = rest_containers
     return is_deleted
