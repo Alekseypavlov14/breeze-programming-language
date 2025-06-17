@@ -4,6 +4,8 @@ from interpreter.types import *
 
 from resolution.module import *
 
+from lib.module import *
+
 from parser.types.expressions import *
 from parser.types.statements import *
 
@@ -51,10 +53,22 @@ class Interpreter:
       self.current_stack = self.stacks[self.current_module_index]
 
       # execute module
-      self.execute_statement(module.content)
+      self.execute_module(module)
 
       # go to next module
       self.current_module_index += 1
+
+  def execute_module(self, module: Module):
+    if is_module_of_type(module, SourceModule):
+      # execute statements in module root
+      for statement in module.content.statements:
+        self.execute_statement(statement)
+
+    if is_module_of_type(module, ExternalModule):
+      # execute all declarations
+      for declaration in module.declarations:
+        # TODO: implement ExternalDeclaration execution
+        pass
 
   # execute statements
 
