@@ -34,3 +34,7 @@ class ExternalObjectDeclaration(ExternalDeclaration):
 
     self.name = name
     self.obj = obj
+
+
+def is_declaration_of_type(declaration, *types: ExternalDeclaration):
+  return isinstance(declaration, *types)
