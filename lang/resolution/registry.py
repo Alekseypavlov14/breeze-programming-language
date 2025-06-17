@@ -20,12 +20,8 @@ class Registry:
 
   # checks if module by ABSOLUTE path is already added to prevent duplicates
   def is_module_added_by_path(self, path: str):
-    # search module with similar path
-    for module in self.modules:
-      if module.path == path:
-        return True
-      
-    return False
+    # search module with path
+    return bool(self.get_module_by_absolute_path(path))
 
   # returns stored module by its ABSOLUTE path
   # returns None if file is not found
@@ -54,27 +50,34 @@ class Registry:
     # list of nodes in topologically sorted order
     sorted = []
 
-    def depth_first_search(module: Module):
-      # if cycle is completed and depth-first search reached discovered node
-      if module.path in discovered:
-        raise ResolutionError(f'Circular dependency including module by path {module.path}')
-      
-      # if module is analyzed
-      if module.path in analyzed:
+    # DFS algorithm iteration (recursive)
+    def depth_first_search(path: str):
+      # if path is analyzed
+      if path in analyzed:
         # do not analyze this module again
         return
-
+      
+      # if cycle is completed and depth-first search reached discovered node
+      if path in discovered:
+        raise ResolutionError(f'Circular dependency including module by path {path}')
+      
       # discover node
-      undiscovered.remove(module.path)
-      discovered.add(module.path)
+      undiscovered.remove(path)
+      discovered.add(path)
+      
+      # get module from current registry
+      module: Module = self.get_module_by_absolute_path(path)
+      if not module:
+        raise ModuleError('Module was not accessible during topological sort')
 
       # discover all successors
+      # dependencies are paths
       for dependency in module.dependencies:
         depth_first_search(dependency)
 
       # analyze node (all dependencies are analyzed)
-      discovered.remove(module.path)
-      analyzed.add(module.path)
+      discovered.remove(path)
+      analyzed.add(path)
 
       # add module to sorted
       sorted.append(module)
@@ -93,15 +96,8 @@ class Registry:
         if dependent.path == module.path:
           continue
         
-        # compute list of dependency paths
-        dependency_paths = []
-
-        # fill dependency_paths
-        for dependency in dependent.dependencies:
-          dependency_paths.append(dependency.path)
-
         # increment in_degree if needed
-        if module.path in dependency_paths:
+        if module.path in dependent.dependencies:
           in_degree += 1
 
       modules_in_degree.append(in_degree)
@@ -110,7 +106,8 @@ class Registry:
     for module_index in range(len(self.modules)):
       # check for zero in_degree
       if modules_in_degree[module_index] == 0: 
-        depth_first_search(self.modules[module_index])
+        # call DFS with PATH
+        depth_first_search(self.modules[module_index].path)
 
     # check if DFS is executed
     # if registry contains modules but no module was analyzed and added to sorted

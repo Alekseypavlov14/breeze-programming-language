@@ -9,7 +9,7 @@ aliases = {
   "base": "C:/Users/User/Desktop/programming language/examples"
 }
 
-path = "C:/Users/User/Desktop/programming language/examples/test_0.0.1.br"
+path = "C:/Users/User/Desktop/programming language/examples/example1.br"
 
 resolver = Resolver(aliases)
 resolver.resolve_modules(path)
