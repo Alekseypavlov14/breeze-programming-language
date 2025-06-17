@@ -52,6 +52,19 @@ class Stack:
       
     raise NameError(f'{name} is not found!')
 
+  # Copies current state of Stack: 
+  # 1) Scopes will be copied using shallow copy (modifying scopes list in origin stack wont affect copied stacks)
+  # 2) Containers are connected (copied by reference)
+  def copy(self):
+    # create new stack instance
+    stack = Stack()
+
+    # shallow copy of scopes
+    stack.scopes = list(self.scopes)
+
+    # return copy of stack
+    return stack
+
 # defines the Scope (slice of stack)
 # Scope stores containers with values
 # Provides methods to add, get and delete containers

@@ -421,7 +421,7 @@ class Parser:
     # consume NEWLINE
     self.consume_current_token()
     
-    return NullExpression()
+    return ExpressionStatement(NullExpression())
 
   # Methods to check statements (without requiring)
   # check if current statement is of type

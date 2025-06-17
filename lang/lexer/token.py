@@ -21,6 +21,11 @@ class Token:
 
   # overload equality operator
   def __eq__(self, other):
+    # if other is not Token
+    if not isinstance(other, Token):
+      return None
+
+    # compare tokens
     return self.type == other.type and self.code == other.code
 
   # defines mapping to string

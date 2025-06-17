@@ -14,7 +14,12 @@ from lexer.token import *
 from shared.keywords import *
 from shared.tokens import *
 
-# executes AST
+# statements will have depth to prevent their execution in wrong places
+BASE_DEPTH = 0
+
+# executes modules consecutively
+# contains list of Stacks that save values created during execution
+# handles imports and exports
 class Interpreter:
   def __init__(self):
     # modules of application
@@ -59,11 +64,16 @@ class Interpreter:
       self.current_module_index += 1
 
   def execute_module(self, module: Module):
+    # handle source modules
     if is_module_of_type(module, SourceModule):
+      # create initial scope for current stack
+      self.current_stack.add_scope()
+
       # execute statements in module root
       for statement in module.content.statements:
-        self.execute_statement(statement)
+        self.execute_statement(statement, BASE_DEPTH)
 
+    # handle external modules
     if is_module_of_type(module, ExternalModule):
       # execute all declarations
       for declaration in module.declarations:
@@ -72,47 +82,53 @@ class Interpreter:
 
   # execute statements
 
-  def execute_statement(self, statement: Statement):
+  def execute_statement(self, statement: Statement, depth: int):
     if is_statement_of_class(statement, BlockStatement):
-      return self.execute_block_statement(statement)
+      return self.execute_block_statement(statement, depth)
     if is_statement_of_class(statement, VariableDeclarationStatement):
       return self.execute_variable_declaration_statement(statement)
     if is_statement_of_class(statement, ConstantDeclarationStatement):
       return self.execute_constant_declaration_statement(statement)
     if is_statement_of_class(statement, ConditionStatement):
-      return self.execute_condition_statement(statement)
+      return self.execute_condition_statement(statement, depth)
     if is_statement_of_class(statement, WhileStatement):
-      return self.execute_while_statement(statement)
+      return self.execute_while_statement(statement, depth)
     if is_statement_of_class(statement, ForStatement):
-      return self.execute_for_statement(statement)
+      return self.execute_for_statement(statement, depth)
     if is_statement_of_class(statement, BreakStatement):
       return self.execute_break_statement(statement)
+    if is_statement_of_class(statement, ConditionStatement):
+      return self.execute_continue_statement(statement)
     if is_statement_of_class(statement, FunctionDeclarationStatement):
-      return self.execute_function_declaration_statement(statement)
+      return self.execute_function_declaration_statement(statement, depth)
     if is_statement_of_class(statement, ReturnStatement):
       return self.execute_return_statement(statement)
     if is_statement_of_class(statement, ExpressionStatement):
       return self.execute_expression_statement(statement)
   
-    raise StatementError('Invalid statement is used')
+    raise StatementError(f'Invalid statement is used')
 
-  def execute_block_statement(self, statement: BlockStatement):
+  def execute_block_statement(self, statement: BlockStatement, depth: int):
     # block of statements has new scope
     self.current_stack.add_scope()
 
     for stat in statement.statements:
-      self.execute_statement(stat)
+      # increment depth
+      self.execute_statement(stat, depth + 1)
 
     # remove scope afterwards
     self.current_stack.remove_scope()
 
   def execute_variable_declaration_statement(self, statement: VariableDeclarationStatement):
+    # default variable value
+    initialization = TransformContainer('', None)
+
     if statement.initialization:
       initialization: ReadableContainer = self.evaluate_expression(statement.initialization)
       if not is_container_of_type(initialization, ReadableContainer):
         raise ValueError('Variable initializer is not readable')
 
-    variable_container = TransformContainer(statement.name, initialization.read())
+    variable_container = TransformContainer(statement.name.code, initialization.read())
     self.current_stack.add_container(variable_container)
 
   def execute_constant_declaration_statement(self, statement: ConstantDeclarationStatement):
@@ -120,21 +136,21 @@ class Interpreter:
     if not is_container_of_type(initialization, ReadableContainer):
       raise ValueError('Constant initializer is not readable')
     
-    constant_container = ReadableContainer(statement.name, initialization.read())
+    constant_container = ReadableContainer(statement.name.code, initialization.read())
     self.current_stack.add_container(constant_container)
 
-  def execute_condition_statement(self, statement: ConditionStatement):
+  def execute_condition_statement(self, statement: ConditionStatement, depth: int):
     condition: ReadableContainer = self.evaluate_expression(statement.condition)
     if not is_container_of_type(condition, ReadableContainer):
       raise ExpressionError('Condition is not a readable container')
 
     if condition.read():
-      self.execute_statement(statement.then_branch)
+      self.execute_statement(statement.then_branch, depth + 1)
 
     elif statement.else_branch:
-      self.execute_statement(statement.else_branch)
+      self.execute_statement(statement.else_branch, depth + 1)
 
-  def execute_while_statement(self, statement: WhileStatement):
+  def execute_while_statement(self, statement: WhileStatement, depth: int):
     while True:
       condition: ReadableContainer = self.evaluate_expression(statement.condition)
       if not is_container_of_type(condition, ReadableContainer):
@@ -145,14 +161,14 @@ class Interpreter:
 
       # handle breaks and continues
       try:
-        self.execute_statement(statement.body)
+        self.execute_statement(statement.body, depth + 1)
 
       except BreakException:
         break
       except ContinueException:
         continue
 
-  def execute_for_statement(self, statement: ForStatement):
+  def execute_for_statement(self, statement: ForStatement, depth: int):
     self.current_stack.add_scope()
 
     self.execute_statement(statement.initializer)
@@ -167,7 +183,7 @@ class Interpreter:
 
       # handle breaks and continues
       try:
-        self.execute_statement(statement.body)
+        self.execute_statement(statement.body, depth + 1)
 
       except BreakException:
         break
@@ -183,9 +199,9 @@ class Interpreter:
   def execute_continue_statement(self, statement: ContinueStatement):
     raise ContinueException() # will be handled in loop
 
-  def execute_function_declaration_statement(self, statement: FunctionDeclarationStatement):
+  def execute_function_declaration_statement(self, statement: FunctionDeclarationStatement, depth: int):
     # remember current stack as reference
-    closure = self.current_stack
+    closure = self.current_stack.copy()
 
     # create function callable
     def declared_function(*arguments: ReadableContainer):
@@ -242,7 +258,7 @@ class Interpreter:
             raise ExpressionError('Default value is not readable')
           
         # compose parameter as variable
-        parameter_container = TransformContainer(param.name, value.read())
+        parameter_container = TransformContainer(param.name.code, value.read())
 
         # save variable
         self.current_stack.add_container(parameter_container)
@@ -252,7 +268,7 @@ class Interpreter:
 
       # execute function
       try:
-        self.execute_statement(statement.body)
+        self.execute_statement(statement.body, depth + 1)
       except ReturnException as returned:
         # read function return value
         returned_value = returned.value
@@ -269,7 +285,7 @@ class Interpreter:
 
     # create container
     function_value: FunctionValue = FunctionValue(declared_function, closure)
-    function_container = TransformContainer(statement.name, function_value)
+    function_container = TransformContainer(statement.name.code, function_value)
 
     # save function
     self.current_stack.add_container(function_container)
@@ -277,6 +293,12 @@ class Interpreter:
   def execute_return_statement(self, statement: ReturnStatement):
     returned_container = self.evaluate_expression(statement.returns)
     raise ReturnException(returned_container) # will be caught by function
+
+  def execute_import_statement(self, statement: ImportStatement):
+    return
+  
+  def execute_export_statement(self, statement: ExportStatement):
+    return
 
   def execute_expression_statement(self, statement: ExpressionStatement):
     return self.evaluate_expression(statement.expression)
@@ -1057,9 +1079,11 @@ class Interpreter:
       arguments.append(argument)
 
     # execute function
-    return_value = left_value.callable(*arguments)
+    return_value: ReadableContainer = left_value.callable(*arguments)
+    if not is_container_of_type(return_value, ReadableContainer):
+      raise ExpressionError('Returned value is not readable')
 
-    return self.create_readable_container(return_value)
+    return self.create_readable_container(return_value.read())
 
   def evaluate_square_brackets_application_expression(self, expression: GroupingApplicationExpression):
     # square brackets in application is obj member access
@@ -1153,7 +1177,7 @@ class Interpreter:
 
   # fundamental expressions
   def evaluate_identifier_expression(self, expression: IdentifierExpression):
-    return self.current_stack.get_container_by_name(expression.name)
+    return self.current_stack.get_container_by_name(expression.name.code)
 
   def evaluate_literal_expression(self, expression: LiteralExpression):
     if is_token_of_type(expression.value, STRING_TOKEN):
