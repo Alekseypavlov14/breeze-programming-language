@@ -6,10 +6,11 @@ from interpreter.interpreter import Interpreter
 # THIS CODE IS TEST
 
 aliases = {
-  "base": "C:/Users/User/Desktop/programming language/examples"
+  "base": "C:/Users/User/Desktop/programming language/examples",
+  "std": "C:/Users/User/Desktop/programming language/lang/lib/modules"
 }
 
-path = "C:/Users/User/Desktop/programming language/examples/example1.br"
+path = "C:/Users/User/Desktop/programming language/examples/test_0.0.1.br"
 
 resolver = Resolver(aliases)
 resolver.resolve_modules(path)

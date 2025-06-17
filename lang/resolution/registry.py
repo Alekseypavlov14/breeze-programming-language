@@ -115,9 +115,6 @@ class Registry:
     if len(self.modules) and not len(sorted):
       raise ResolutionError('Circular dependency in modules. Every module is dependent on others')
 
-    # reverse list to have dependencies at the beginning and dependents at the end
-    sorted.reverse()
-
     # update modules field with sorted modules
     self.modules = sorted
 
