@@ -1,4 +1,4 @@
-// import { externalFunction } from "@std/test.py"
+import * from "@std/test.py"
 import { externalFunction } from "@base/example2.br"
 
 var a = 10

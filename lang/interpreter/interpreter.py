@@ -90,6 +90,9 @@ class Interpreter:
 
     # handle external modules
     if is_module_of_type(module, ExternalModule):
+      # create initial scope for current stack
+      self.current_stack.add_scope()
+      
       # execute all declarations
       for declaration in module.declarations:
         self.execute_external_declaration(declaration)
