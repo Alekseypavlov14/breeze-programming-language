@@ -7,6 +7,8 @@ from parser.parser import *
 from lexer.lexer import *
 from shared.extensions import *
 
+import importlib.util
+import importlib
 import os
 import re
 
@@ -146,7 +148,45 @@ class Resolver:
   # EXTERNAL module resolution
 
   def get_external_module_by_absolute_path(self, path: str) -> ExternalModule:
-    pass
+    # check for absolute path
+    if not os.path.isabs(path):
+      raise PathError(f"Absolute path expected. Received {path}")
+
+    # check it to lead to a file
+    if not os.path.isfile(path):
+      raise ModuleError(f"Invalid module path. Received {path}")
+
+    # check extension
+    if not path.endswith(f'.{EXTERNAL_MODULE_EXTENSION}'):
+      raise ModuleError(f"Invalid external module extension. Received {path}")
+
+    # generate a unique module name from the path
+    module_name = re.sub(r'\W+', '_', path)
+
+    # dynamically load the external Python module
+    spec = importlib.util.spec_from_file_location(module_name, path)
+    if spec is None or spec.loader is None:
+      raise ModuleError(f"Cannot load external module: {path}")
+
+    # execute module
+    module = importlib.util.module_from_spec(spec)
+    try:
+      spec.loader.exec_module(module)
+    except Exception as e:
+      raise ModuleError(f"Failed to execute external module at {path}: {e}")
+
+    # search for a class that extends ExternalModule
+    for _, obj in inspect.getmembers(module, inspect.isclass):
+      if issubclass(obj, ExternalModule) and obj is not ExternalModule:
+        try:
+          # instantiate the class with required path
+          instance = obj(path)
+
+          return instance
+        except Exception as e:
+          raise ModuleError(f"Failed to instantiate ExternalModule class in {path}: {e}")
+
+    raise ModuleError(f"No class extending ExternalModule found in {path}")
 
   # returns list of dependency absolute paths
   # does not return duplicated dependencies
