@@ -12,4 +12,4 @@ Then module is parsed (AST is created) and the process repeats for dependency mo
 
 # Aliases
 
-Resolver receives **aliases dict** during initialization. All aliases start with ```@``` symbol.
+Resolver receives **aliases dict** during initialization. All aliases must start with ```@``` symbol.

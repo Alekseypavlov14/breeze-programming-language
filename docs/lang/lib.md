@@ -6,9 +6,9 @@ For Python module to be Breeze external module, it has to contain **ExternalModu
 
 ## ExternalModule
 
-This class defines common interface for external module written in Python. To be an external module, derived class has to define **dependencies** (relative paths list) and **definitions** list. **Definitions** are special classes that can be executed by **Interpreter** with defining entities in runtime. 
+This class defines common interface for external module written in Python. To be an external module, derived class has to define **dependencies** (relative paths list) and **declarations** list. **declarations** are special classes that can be executed by **Interpreter** with declaring entities in runtime. 
 
-Path of the module has to be passed as parameter through **__init__** function to ```super().__init__()```. 
+Path of the module, dependencies and declarations have to be passed as parameter through **__init__** function to ```super().__init__()```. 
 
 If Python module follows all the requirements, it can be used as dependency for ```.br``` modules.
 

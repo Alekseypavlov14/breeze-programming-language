@@ -34,9 +34,11 @@ Expressions are parsed until specified separator (usually NEWLINE) and parser re
 
 Expressions cannot follow each other in the same AST node without operator between them. Every pair of expressions is connected by **operator** or belongs to different **expression statements**.
 
+Expression tree is formed recursively with **base_expression** available to add nodes for tree.
+
 ## Parser methods
 
-Parser methods are built on two basic methods: match_token and require_token
+Parser methods are built on two basic methods: match_token and require_token.
 **match_token** returns bool for current token match and does not move position pointer
 **require_token** returns found token and raises exception if it is not received (spaces are skipped)
 
