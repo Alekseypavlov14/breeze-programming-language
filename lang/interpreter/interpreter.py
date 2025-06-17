@@ -174,7 +174,7 @@ class Interpreter:
     closure = self.current_stack
 
     # create function callable
-    def declared_function(arguments: list[ReadableContainer]):
+    def declared_function(*arguments: ReadableContainer):
       # validate arguments containers
       for argument in arguments:
         if not is_container_of_type(argument, ReadableContainer):
@@ -214,7 +214,7 @@ class Interpreter:
       self.current_stack.add_scope()
 
       # initialize parameters
-      for param_index in range(statement.params):
+      for param_index in range(len(statement.params)):
         param = statement.params[param_index]
 
         # compute argument value
@@ -1031,7 +1031,7 @@ class Interpreter:
       raise ExpressionError('Right value is not readable')
     
     right_value: list[ReadableContainer] = right.read()
-    if not self.is_value_of_type(right, TUPLE_TYPE):
+    if not self.is_value_of_type(right_value, TUPLE_TYPE):
       raise SyntaxError('Invalid composition')
     
     arguments = []
@@ -1161,6 +1161,6 @@ class Interpreter:
     return ReadableContainer('', value)
   
   # check data types of values
-  def is_value_of_type(self, value, *types: list[str]):
+  def is_value_of_type(self, value, *types: str):
     return get_value_type(value) in types
   
