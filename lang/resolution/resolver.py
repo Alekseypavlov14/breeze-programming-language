@@ -235,9 +235,8 @@ class Resolver:
       # filter import statements
       if is_statement_of_class(statement, ImportStatement):
         # statement: ImportStatement 
-        # -> .path: LiteralExpression 
-        # -> .value: Token 
-        path_token: Token = statement.path.value
+        # -> .path: Token 
+        path_token: Token = statement.path
 
         # check token to be string literal
         if not is_token_of_type(path_token, STRING_TOKEN):

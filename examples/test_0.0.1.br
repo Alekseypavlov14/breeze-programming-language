@@ -1,5 +1,5 @@
 // import { externalFunction } from "@std/test.py"
-// import { externalFunction } from "@base/example2.br"
+import { externalFunction } from "@base/example2.br"
 
 var a = 10
 a += 5
@@ -10,4 +10,4 @@ function f() {
 
 a += 1
 
-var d = f()
+var d = externalFunction()

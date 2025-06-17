@@ -1,3 +1,5 @@
-import { externalFunction } from "@std/test.py"
+var a = 40
 
-export const c = "ABC"
+export function externalFunction() {
+  return a
+}

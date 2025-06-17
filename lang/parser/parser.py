@@ -404,7 +404,7 @@ class Parser:
     self.skip_tokens(SPACE_TOKEN)
 
     # require NEWLINE
-    self.require_token(NEW_KEYWORD)
+    self.require_token(NEWLINE_TOKEN)
     self.consume_current_token()
 
     # return import statement

@@ -324,7 +324,7 @@ class Interpreter:
       raise ExpressionError('Imports are only allowed on global level')
 
     # resolve dependency absolute path
-    dependency_path = self.resolver.resolve_absolute_path(self.current_module.path, statement.path)
+    dependency_path = self.resolver.resolve_absolute_path(self.current_module.path, statement.path.code)
 
     # search module by ABSOLUTE path among resolved modules
     for index in range(len(self.modules)):
@@ -370,7 +370,7 @@ class Interpreter:
       raise ExpressionError('Exports are only allowed on global level')
     
     # execute statement
-    container: ReadableContainer = self.execute_statement(statement, depth)
+    container: ReadableContainer = self.execute_statement(statement.exports, depth)
     if not is_container_of_type(container, ReadableContainer):
       raise ExpressionError('Invalid export statement')
 
