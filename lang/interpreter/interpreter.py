@@ -6,6 +6,8 @@ from interpreter.types import *
 from resolution.resolver import *
 from resolution.module import *
 
+from stdlib.builtin.declarations import *
+
 from parser.types.expressions import *
 from parser.types.statements import *
 
@@ -24,6 +26,8 @@ class Interpreter:
   def __init__(self, resolver: Resolver):
     # resolver instance
     self.resolver = resolver
+    # builtins scope
+    self.builtins = Scope
 
     # modules of application
     self.modules: list[Module] = []
@@ -1074,7 +1078,7 @@ class Interpreter:
       return self.create_readable_container(left_value <= right_value)
     
     raise TypeError(f'Binary operation {expression.operator.code} with types {get_value_type(left_value)} and {get_value_type(right_value)} is not supported')
-  
+
   # grouping expressions
   def evaluate_grouping_expression(self, expression: GroupingExpression):
     if is_token_of_type(expression.operator, LEFT_PARENTHESES_TOKEN):
@@ -1128,20 +1132,16 @@ class Interpreter:
     if not is_container_of_type(left, ReadableContainer):
       raise ExpressionError('Right value is not readable')
     
-    right_value: list[ReadableContainer] = right.read()
+    right_value: list[ReadableContainer] = list(right.read())
     if not self.is_value_of_type(right_value, TUPLE_TYPE):
       raise SyntaxError('Invalid composition')
     
-    arguments = []
-
     for argument in list(right_value):
       if not is_container_of_type(argument, ReadableContainer):
         raise ExpressionError('Argument is not readable')
 
-      arguments.append(argument)
-
     # execute function
-    return_value: ReadableContainer = left_value.callable(*arguments)
+    return_value: ReadableContainer = left_value.callable(*right_value)
     if not is_container_of_type(return_value, ReadableContainer):
       raise ExpressionError('Returned value is not readable')
 
@@ -1254,6 +1254,41 @@ class Interpreter:
       return self.create_readable_container(None)
     
     raise ExpressionError(f'Error during literal parsing: {expression.value}')
+
+  # builtin declarations
+  def execute_builtin_declaration(self, declaration: BuiltInDeclaration):
+    if is_declaration_of_type(declaration, ConstantBuiltInDeclaration):
+      return self.execute_builtin_constant_declaration(declaration)
+    if is_declaration_of_type(declaration, FunctionBuiltInDeclaration):
+      return self.execute_builtin_function_declaration(declaration)
+    
+    raise ExpressionError('Builtin declaration of invalid type is executed')
+
+  def execute_builtin_constant_declaration(self, declaration: ConstantBuiltInDeclaration):
+    container = ReadableContainer(declaration.name, declaration.value)
+    self.builtins.add_container(container)
+
+  def execute_builtin_function_declaration(self, declaration: FunctionBuiltInDeclaration):
+    def declared_function(*arguments):
+      if len(arguments) != declaration.arguments:
+        raise ValueError(f'{len(declaration.arguments)} arguments required but {len(arguments)} received')
+      
+      # list of unpacked values
+      arguments_values = []
+
+      for argument in arguments:
+        if not is_container_of_type(argument, ReadableContainer):
+          raise ExpressionError('Argument is not readable')
+        
+        arguments_values.append(argument.read())
+
+      # execute builtin function are return value in container
+      return self.create_readable_container(declaration.callable(*arguments_values))
+
+    function_value = FunctionValue(declared_function, None)
+    function_container = ReadableContainer(declaration.name, function_value)
+
+    self.builtins.add_container(function_container)
 
   # creates anonymous readable containers for expression evaluations
   def create_readable_container(self, value):
