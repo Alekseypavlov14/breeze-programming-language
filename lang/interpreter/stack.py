@@ -1,6 +1,46 @@
 from interpreter.containers import *
 from interpreter.exceptions import *
 
+# defines the Scope (slice of stack)
+# Scope stores containers with values
+# Provides methods to add, get and delete containers
+class Scope:
+  def __init__(self):
+    self.containers: list[Container] = []
+
+  def add_container(self, container: Container):
+    if self.is_container_added(container.name):
+      raise NameError(f'The symbol "{container.name}" is already declared')
+    
+    self.containers.append(container)
+
+  def is_container_added(self, name: str):
+    return bool(self.get_container_by_name(name))
+
+  # return None is container is not found
+  def get_container_by_name(self, name):
+    for container in self.containers:
+      if container.name == name:
+        return container
+      
+    return None
+
+  # returns boolean indicating if container was deleted
+  def remove_container_by_name(self, name):
+    rest_containers = []
+    is_deleted = False
+
+    for container in self.containers:
+      if container.name != name:
+        rest_containers.append(container)
+      else:
+        is_deleted = True
+        break
+
+    self.containers = rest_containers
+    return is_deleted
+
+
 # defines the environment Stack 
 # contains list of Scopes
 class Stack:
@@ -9,6 +49,9 @@ class Stack:
 
   def add_scope(self):
     self.scopes.append(Scope())
+
+  def insert_scope(self, scope: Scope):
+    self.scopes.append(scope)
 
   def remove_scope(self):
     self.scopes.pop()
@@ -64,42 +107,3 @@ class Stack:
 
     # return copy of stack
     return stack
-
-# defines the Scope (slice of stack)
-# Scope stores containers with values
-# Provides methods to add, get and delete containers
-class Scope:
-  def __init__(self):
-    self.containers: list[Container] = []
-
-  def add_container(self, container: Container):
-    if self.is_container_added(container.name):
-      raise NameError(f'The symbol "{container.name}" is already declared')
-    
-    self.containers.append(container)
-
-  def is_container_added(self, name: str):
-    return bool(self.get_container_by_name(name))
-
-  # return None is container is not found
-  def get_container_by_name(self, name):
-    for container in self.containers:
-      if container.name == name:
-        return container
-      
-    return None
-
-  # returns boolean indicating if container was deleted
-  def remove_container_by_name(self, name):
-    rest_containers = []
-    is_deleted = False
-
-    for container in self.containers:
-      if container.name != name:
-        rest_containers.append(container)
-      else:
-        is_deleted = True
-        break
-
-    self.containers = rest_containers
-    return is_deleted

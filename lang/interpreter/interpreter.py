@@ -27,7 +27,7 @@ class Interpreter:
     # resolver instance
     self.resolver = resolver
     # builtins scope
-    self.builtins = Scope
+    self.builtins = Scope()
 
     # modules of application
     self.modules: list[Module] = []
@@ -51,6 +51,7 @@ class Interpreter:
     # exported declarations will be added to this instance
     self.current_exports: Exports | None = None
 
+  # Step 1) Load application modules
   # method to load app modules to application (sorted)
   # creates stack for each module
   def load_modules(self, modules: list[Module]):
@@ -61,6 +62,17 @@ class Interpreter:
     # create exports for each module
     self.exports = [Exports() for _ in modules]
 
+  # Step 2) Register builtins 
+  def register_builtins(self, builtins: list[BuiltInDeclaration]):
+    for builtin in builtins:
+      # insert builtin in scope
+      self.execute_builtin_declaration(builtin)
+
+    for stack in self.stacks:
+      # insert builtins scope to all stacks
+      stack.insert_scope(self.builtins)
+
+  # Step 3) Execute application
   # method that executes the list of modules
   def execute(self):
     # initialize pointer
@@ -1132,7 +1144,7 @@ class Interpreter:
     if not is_container_of_type(left, ReadableContainer):
       raise ExpressionError('Right value is not readable')
     
-    right_value: list[ReadableContainer] = list(right.read())
+    right_value: list[ReadableContainer] = right.read()
     if not self.is_value_of_type(right_value, TUPLE_TYPE):
       raise SyntaxError('Invalid composition')
     
@@ -1141,7 +1153,7 @@ class Interpreter:
         raise ExpressionError('Argument is not readable')
 
     # execute function
-    return_value: ReadableContainer = left_value.callable(*right_value)
+    return_value: ReadableContainer = left_value.callable(*list(right_value))
     if not is_container_of_type(return_value, ReadableContainer):
       raise ExpressionError('Returned value is not readable')
 
