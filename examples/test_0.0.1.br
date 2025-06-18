@@ -10,3 +10,9 @@ function f() {
 a += 1
 
 var d = externalFunction()
+
+const e = _builtin_console_input("Input please: ")
+_builtin_console_output(e + "")
+
+_builtin_console_output("Hello from console: ")
+_builtin_console_output(d)

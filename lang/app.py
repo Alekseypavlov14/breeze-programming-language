@@ -3,6 +3,8 @@ from parser.parser import Parser
 from resolution.resolver import Resolver
 from interpreter.interpreter import Interpreter
 
+from stdlib.builtin.builtins import *
+
 # THIS CODE IS TEST
 
 aliases = {
@@ -17,6 +19,5 @@ resolver.resolve_modules(path)
 modules = resolver.sort_modules()
 interpreter = Interpreter(resolver)
 interpreter.load_modules(modules)
+interpreter.register_builtins(builtins)
 interpreter.execute()
-
-print(interpreter.stacks[1].get_container_by_name('d').read())
