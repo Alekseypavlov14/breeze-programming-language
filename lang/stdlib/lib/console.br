@@ -1,0 +1,12 @@
+function output(message, end = "\n") {
+  _builtin_console_output(message + end)
+}
+
+function input(prompt) {
+  return _builtin_console_input(prompt)
+}
+
+const console = {
+  output: output,
+  input: input,
+}

@@ -9,7 +9,7 @@ from stdlib.builtin.builtins import *
 
 aliases = {
   "base": "C:/Users/User/Desktop/programming language/examples",
-  "std": "C:/Users/User/Desktop/programming language/lang/lib/modules"
+  "std": "C:/Users/User/Desktop/programming language/lang/stdlib/lib"
 }
 
 path = "C:/Users/User/Desktop/programming language/examples/test_0.0.1.br"
