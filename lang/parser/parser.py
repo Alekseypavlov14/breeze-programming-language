@@ -163,7 +163,7 @@ class Parser:
     self.skip_tokens(SPACE_TOKEN, NEWLINE_TOKEN)
 
     # init ELSE statement
-    else_branch = NullExpression()
+    else_branch = ExpressionStatement(NullExpression())
 
     # init ELSE statement
     if self.match_token(map_keyword_to_token(ELSE_KEYWORD)):
@@ -174,6 +174,9 @@ class Parser:
 
       # get ELSE statement
       else_branch = self.parse_statement(*terminators)
+
+    # require newline
+    self.require_newline_for_next_statements()
 
     # return condition statement
     return ConditionStatement(condition, then_branch, else_branch)
@@ -228,6 +231,9 @@ class Parser:
     # get loop body
     body = self.parse_statement(*terminators)
 
+    # require newline
+    self.require_newline_for_next_statements()
+
     return ForStatement(initialization, condition, increment, body)
   def parse_while_statement(self, *terminators: Token):
     # start with WHILE keyword
@@ -257,17 +263,26 @@ class Parser:
     # get body statement
     body = self.parse_statement(*terminators)
 
+    # require newline
+    self.require_newline_for_next_statements()
+
     return WhileStatement(condition, body)
   def parse_break_statement(self):
     # require break keyword
     self.require_token(map_keyword_to_token(BREAK_KEYWORD))
     self.consume_current_token()
 
+    # require newline
+    self.require_newline_for_next_statements()
+
     return BreakStatement()
   def parse_continue_statement(self):
     # require continue keyword
     self.require_token(map_keyword_to_token(CONTINUE_KEYWORD))
     self.consume_current_token()
+
+    # require newline
+    self.require_newline_for_next_statements()
 
     return ContinueStatement()
   def parse_function_declaration_statement(self):
@@ -310,6 +325,9 @@ class Parser:
     # get body statement
     body = self.parse_block_statement()
 
+    # require newline
+    self.require_newline_for_next_statements()
+
     return FunctionDeclarationStatement(name, parameters, body)
   def parse_function_parameter_expression(self):
     self.skip_tokens(SPACE_TOKEN, NEWLINE_TOKEN)
@@ -341,8 +359,9 @@ class Parser:
 
     # compose return statement
     expression = self.parse_expression(None, BASE_PRECEDENCE, NEWLINE_TOKEN, *terminators)
+
     return ReturnStatement(expression)
-  def pse_class_declaration_statement(self):
+  def parse_class_declaration_statement(self):
     pass
   def parse_import_statement(self):
     # get IMPORT token
@@ -401,11 +420,8 @@ class Parser:
     self.require_token(STRING_TOKEN)
     path = self.consume_current_token()
 
-    self.skip_tokens(SPACE_TOKEN)
-
-    # require NEWLINE
-    self.require_token(NEWLINE_TOKEN)
-    self.consume_current_token()
+    # require newline
+    self.require_newline_for_next_statements()
 
     # return import statement
     return ImportStatement(path, imports)
@@ -429,6 +445,9 @@ class Parser:
     # validate export statement
     if not is_statement_of_class(exports, *allowed_exports):
       raise ParserError('Invalid export statement')
+    
+    # require newline
+    self.require_newline_for_next_statements()
 
     return ExportStatement(exports)
   def parse_block_statement(self):
@@ -455,6 +474,7 @@ class Parser:
     raise ParserError(f'Expected token {RIGHT_CURLY_BRACE_TOKEN}')
   def parse_expression_statement(self, *terminators: Token):
     expression = self.parse_expression(None, BASE_PRECEDENCE, NEWLINE_TOKEN, *terminators)
+
     return ExpressionStatement(expression)
   def parse_comment(self):
     # require comment
@@ -473,6 +493,17 @@ class Parser:
     self.consume_current_token()
     
     return ExpressionStatement(NullExpression())
+
+  # reusable utilities
+
+  def require_newline_for_next_statements(self):
+    self.skip_tokens(SPACE_TOKEN)
+
+    if self.is_end():
+      return
+    
+    self.require_token(NEWLINE_TOKEN)
+    self.consume_current_token()
 
   # Methods to check statements (without requiring)
   # check if current statement is of type
@@ -672,6 +703,7 @@ class Parser:
       while not self.match_token(closing_operator):
         # require comma separator
         if len(expressions):
+          self.skip_tokens(SPACE_TOKEN, NEWLINE_TOKEN)
           self.require_token(COMMA_TOKEN)
           self.consume_current_token()
 
@@ -740,6 +772,7 @@ class Parser:
       while not self.match_token(RIGHT_CURLY_BRACE_TOKEN):
         # require comma separator
         if len(entries):
+          self.skip_tokens(SPACE_TOKEN, NEWLINE_TOKEN)
           self.require_token(COMMA_TOKEN)
           self.consume_current_token()
 

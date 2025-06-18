@@ -1,5 +1,5 @@
 import { externalFunction } from "@base/example2.br"
-import { console } from '@std/console.br'
+import { console } from "@std/console.br"
 
 var a = 10
 a += 5
@@ -12,7 +12,7 @@ a += 1
 
 var d = externalFunction()
 
-const e = console.input("Input please: ")
+var e = console.input("Input please: ")
 console.output(e)
 
 console.input("Hello from console: ")
