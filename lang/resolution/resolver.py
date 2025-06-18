@@ -2,13 +2,10 @@ from resolution.module import *
 from resolution.registry import *
 from resolution.exceptions import *
 from resolution.aliases import *
-from lib.module import *
 from parser.parser import *
 from lexer.lexer import *
 from shared.extensions import *
 
-import importlib.util
-import importlib
 import os
 import re
 
@@ -24,6 +21,7 @@ class Resolver:
     self.lexer = Lexer()
     self.parser = Parser()
     self.registry = Registry()
+
     # aliases dict
     self.aliases: dict = aliases
 
@@ -78,10 +76,6 @@ class Resolver:
     self.registry.sort_topologically()
     return self.registry.get_modules()
   
-
-
-  # PATH resolution
-
   # allows to get absolute path of dependency module
   # base_path represents the ABSOLUTE path of dependent module (importer)
   # path represents the RELATIVE path to dependency module (exporter)
@@ -112,104 +106,12 @@ class Resolver:
     # returns resolved absolute path without symbolic links
     return os.path.realpath(dependency_path)
 
-
-
-  # COMMON module resolution
-
-  # receives resolved ABSOLUTE path
-  # based on specific module type methods
-  def get_module_by_absolute_path(self, path: str) -> Module:
-    # do not parse module if it is already parsed
-    if self.registry.is_module_added_by_path(path):
-      return self.registry.get_module_by_absolute_path(path)
-
-    # check if source module    
-    if path.endswith(f'.{SOURCE_MODULE_EXTENSION}'):
-      return self.get_source_module_by_absolute_path(path)
-    
-    # check if external module
-    if path.endswith(f'.{EXTERNAL_MODULE_EXTENSION}'):
-      return self.get_external_module_by_absolute_path(path)
-    
-    raise ModuleError('Invalid module extension')
-
-  # returns dependency absolute paths
-  # based on specific module type methods
-  def get_module_dependency_paths(self, module: Module) -> list[str]:
-    if is_module_of_type(module, SourceModule):
-      return self.get_source_module_dependency_paths(module)
-    if is_module_of_type(module, ExternalModule):
-      return self.get_external_module_dependency_paths(module)
-
-    raise ModuleError('Cannot get dependencies of invalid module')
-
-
-
-  # EXTERNAL module resolution
-
-  def get_external_module_by_absolute_path(self, path: str) -> ExternalModule:
-    # check for absolute path
-    if not os.path.isabs(path):
-      raise PathError(f"Absolute path expected. Received {path}")
-
-    # check it to lead to a file
-    if not os.path.isfile(path):
-      raise ModuleError(f"Invalid module path. Received {path}")
-
-    # check extension
-    if not path.endswith(f'.{EXTERNAL_MODULE_EXTENSION}'):
-      raise ModuleError(f"Invalid external module extension. Received {path}")
-
-    # generate a unique module name from the path
-    module_name = re.sub(r'\W+', '_', path)
-
-    # dynamically load the external Python module
-    spec = importlib.util.spec_from_file_location(module_name, path)
-    if spec is None or spec.loader is None:
-      raise ModuleError(f"Cannot load external module: {path}")
-
-    # execute module
-    module = importlib.util.module_from_spec(spec)
-    try:
-      spec.loader.exec_module(module)
-    except Exception as e:
-      raise ModuleError(f"Failed to execute external module at {path}: {e}")
-
-    # search for a class that extends ExternalModule
-    for _, obj in inspect.getmembers(module, inspect.isclass):
-      if issubclass(obj, ExternalModule) and obj is not ExternalModule:
-        try:
-          # instantiate the class with required path
-          instance = obj(path)
-
-          return instance
-        except Exception as e:
-          raise ModuleError(f"Failed to instantiate ExternalModule class in {path}: {e}")
-
-    raise ModuleError(f"No class extending ExternalModule found in {path}")
-
-  # returns list of dependency absolute paths
-  # does not return duplicated dependencies
-  def get_external_module_dependency_paths(self, module: ExternalModule) -> list[str]:
-    dependencies = set()
-
-    # dependency is relative path (str)
-    for dependency in module.dependencies:
-      absolute_path = self.resolve_absolute_path(module.path, dependency)
-      dependencies.add(absolute_path)
-
-    return list(dependencies)
-
-
-
-  # SOURCE module resolution
-
   # receives the ABSOLUTE path 
-  # returns SourceModule instance
+  # returns Module instance
   # does NOT parse dependencies
-  def get_source_module_by_absolute_path(self, path: str) -> SourceModule:
+  def get_module_by_absolute_path(self, path: str) -> Module:
     # get file content
-    content = self.read_source_module_by_absolute_path(path)
+    content = self.read_module_by_absolute_path(path)
 
     # parse module content
     tokens = self.lexer.parse(content)
@@ -217,12 +119,12 @@ class Resolver:
 
     # return parsed module
     # leave dependencies as empty list until they are parsed
-    return SourceModule(path, [], ast)    
+    return Module(path, [], ast)    
 
   # returns list of dependency absolute paths 
   # does not return duplicated dependencies
   # based on IMPORT statements
-  def get_source_module_dependency_paths(self, module: SourceModule) -> list[str]:
+  def get_module_dependency_paths(self, module: Module) -> list[str]:
     # extract statements from module
     statements = module.content.statements
 
@@ -252,8 +154,8 @@ class Resolver:
     # return dependency paths list
     return list(dependencies)
 
-  # get source module content (str) by ABSOLUTE path
-  def read_source_module_by_absolute_path(self, path: str) -> str:
+  # get module content (str) by ABSOLUTE path
+  def read_module_by_absolute_path(self, path: str) -> str:
     # check for path to be ABSOLUTE
     if not os.path.isabs(path):
       raise PathError(f"Absolute path expected. Received {path}")

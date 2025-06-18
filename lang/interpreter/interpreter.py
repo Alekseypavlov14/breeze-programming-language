@@ -6,9 +6,6 @@ from interpreter.types import *
 from resolution.resolver import *
 from resolution.module import *
 
-from lib.declarations import *
-from lib.module import *
-
 from parser.types.expressions import *
 from parser.types.statements import *
 
@@ -72,15 +69,6 @@ class Interpreter:
       self.current_stack = self.stacks[self.current_module_index]
       self.current_exports = self.exports[self.current_module_index]
 
-      # execute module
-      self.execute_module(module)
-
-      # go to next module
-      self.current_module_index += 1
-
-  def execute_module(self, module: Module):
-    # handle source modules
-    if is_module_of_type(module, SourceModule):
       # create initial scope for current stack
       self.current_stack.add_scope()
 
@@ -88,14 +76,8 @@ class Interpreter:
       for statement in module.content.statements:
         self.execute_statement(statement, BASE_DEPTH)
 
-    # handle external modules
-    if is_module_of_type(module, ExternalModule):
-      # create initial scope for current stack
-      self.current_stack.add_scope()
-      
-      # execute all declarations
-      for declaration in module.declarations:
-        self.execute_external_declaration(declaration)
+      # go to next module
+      self.current_module_index += 1
 
   # execute statements
 
@@ -1272,107 +1254,6 @@ class Interpreter:
       return self.create_readable_container(None)
     
     raise ExpressionError(f'Error during literal parsing: {expression.value}')
-
-  # execute external declarations
-
-  def execute_external_declaration(self, declaration: ExternalDeclaration):
-    if is_declaration_of_type(declaration, ExternalConstantDeclaration):
-      return self.execute_external_constant_declaration(declaration)
-    if is_declaration_of_type(declaration, ExternalFunctionDeclaration):
-      return self.execute_external_function_declaration(declaration)
-    
-    raise ExpressionError('Invalid external declaration')
-
-  def execute_external_constant_declaration(self, declaration: ExternalConstantDeclaration):
-    container = ReadableContainer(declaration.name, declaration.value)
-
-    # add container to stack
-    self.current_stack.add_container(container)
-    # external declarations are always exported 
-    self.current_exports.add_container(container)
-
-  def execute_external_function_declaration(self, declaration: ExternalFunctionDeclaration):
-    # define closure for function
-    closure = self.current_stack.copy()
-
-    def declared_function(*arguments: Container):
-      # validate arguments containers
-      for argument in arguments:
-        if not is_container_of_type(argument, ReadableContainer):
-          raise ExpressionError('Argument is not readable')
-
-      parameters_amount = len(declaration.parameters)
-      required_parameters_amount = parameters_amount
-      passed_arguments = len(arguments)
-
-      # flag that indicates that all next parameters are optional
-      optional_argument_found = False
-
-      # mention that parameters with default values are optional
-      for param in declaration.parameters:
-        # prevent required parameter follow optional
-        if not param.defaultValue and optional_argument_found:
-          raise ParameterError('Required argument cannot follow optional one')
-
-        if param.defaultValue:  
-          required_parameters_amount -= 1
-          optional_argument_found = True
-        
-      # check if arguments are less than enough
-      if passed_arguments < required_parameters_amount:
-        raise ValueError(f'{required_parameters_amount} parameters are required but {passed_arguments} are received')
-
-      # check if arguments are more than possible 
-      if passed_arguments > parameters_amount:
-        raise ValueError(f'{parameters_amount} can be passed but {passed_arguments} are received')
-      
-      # remember origin stack where function was called
-      # for external functions, stack change is needed not to interact with current stack
-      origin_stack = self.current_stack
-
-      # switch scope to function closure
-      self.current_stack = closure
-      # create scope for function
-      self.current_stack.add_scope()
-
-      # initialize parameters values
-      parameters = []
-
-      for param_index in range(len(declaration.parameters)):
-        param = declaration.parameters[param_index]
-
-        # compute argument value
-        if param_index < passed_arguments:
-          # assign passed value
-          value: ReadableContainer = arguments[param_index]
-        else:
-          # evaluate default value
-          value: ReadableContainer = self.evaluate_expression(declaration.parameters[param_index].defaultValue)
-          if not is_container_of_type(value, ReadableContainer):
-            raise ExpressionError('Default value is not readable')
-
-        parameters.append(value)
-
-      # change stack back to origin
-      self.current_stack = origin_stack
-
-      # execute external Python function
-      returned_value = declaration.callable(*parameters)
-
-      # wrap value to container
-      return_container = self.create_readable_container(returned_value)
-
-      # function has to return a container
-      return return_container
-
-    # create container
-    function_value: FunctionValue = FunctionValue(declared_function, closure)
-    function_container = TransformContainer(declaration.name, function_value)
-
-    # save function
-    self.current_stack.add_container(function_container)
-
-    return function_container
 
   # creates anonymous readable containers for expression evaluations
   def create_readable_container(self, value):

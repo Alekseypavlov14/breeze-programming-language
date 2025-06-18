@@ -19,4 +19,4 @@ interpreter = Interpreter(resolver)
 interpreter.load_modules(modules)
 interpreter.execute()
 
-print(interpreter.stacks[2].get_container_by_name('d').read())
+print(interpreter.stacks[1].get_container_by_name('d').read())
