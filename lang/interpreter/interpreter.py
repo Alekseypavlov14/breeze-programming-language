@@ -399,6 +399,8 @@ class Interpreter:
       return self.evaluate_grouping_expression(expression)
     if is_expression_of_class(expression, GroupingApplicationExpression):
       return self.evaluate_grouping_application_expression(expression)
+    if is_expression_of_class(expression, AssociationExpression):
+      return self.evaluate_curly_braces_expression(expression)
     
     raise SyntaxError('Invalid expression found')
 
@@ -553,7 +555,9 @@ class Interpreter:
       raise SyntaxError('Object member accessed by dot has to be a literal')
   
     obj: dict = obj_container.read()
-    value_container = obj.get(expression.right.name)
+    key: Token = expression.right.name
+    
+    value_container = obj.get(key.code)
 
     if not is_container_of_type(value_container, ReadableContainer):
       raise ValueError('Accessed value is not readable')
@@ -1203,7 +1207,7 @@ class Interpreter:
 
       # handle string keys without quotes (allowed for object keys)
       if is_expression_of_class(key, IdentifierExpression):
-        parsed_key: str = key.name
+        parsed_key: Token = key.name
 
       # handle literal keys
       elif is_expression_of_class(key, LiteralExpression):
@@ -1211,7 +1215,7 @@ class Interpreter:
         if not self.is_value_of_type(key.value, OBJECT_KEY_TYPES):
           raise SyntaxError('Invalid key expression')
         
-        parsed_key: str = key.value
+        parsed_key: Token = key.value
       
       # handle dynamic keys (in [])
       elif is_expression_of_class(key, GroupingExpression):
@@ -1237,7 +1241,7 @@ class Interpreter:
         if not self.is_value_of_type(first_container_value, *OBJECT_KEY_TYPES):
           raise SyntaxError(f'Key expression has to be literal but {get_value_type(first_container_value)} received')
 
-        parsed_key = first_container_value
+        parsed_key: Token = first_container_value
       
       # parse value
       value_container = self.evaluate_expression(value)
@@ -1245,7 +1249,7 @@ class Interpreter:
         raise ExpressionError('Value is not readable')
       
       # set parsed entry
-      obj[parsed_key] = value_container
+      obj[parsed_key.code] = value_container
 
     return self.create_readable_container(obj)
 

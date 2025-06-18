@@ -6,7 +6,7 @@ function input(prompt) {
   return _builtin_console_input(prompt)
 }
 
-const console = {
+export const console = {
   output: output,
   input: input,
 }

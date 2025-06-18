@@ -303,10 +303,18 @@ class Parser:
     self.consume_current_token()
 
     # get parameters
-    parameters: FunctionParameterExpression = []
+    parameters: list[FunctionParameterExpression] = []
 
     # parse parentheses expression
     while not self.is_end() and not self.match_token(RIGHT_PARENTHESES_TOKEN):
+      if (len(parameters)):
+        self.skip_tokens(SPACE_TOKEN, NEWLINE_TOKEN)
+
+        self.require_token(COMMA_TOKEN)
+        self.consume_current_token()
+
+        self.skip_tokens(SPACE_TOKEN, NEWLINE_TOKEN)
+
       parameter = self.parse_function_parameter_expression()
       parameters.append(parameter)
 
@@ -569,6 +577,7 @@ class Parser:
     while not self.is_end() and not self.match_token(*OPERATOR_TOKENS):
       # if base_expression is followed by non-operator tokens - error in composition
       if base_expression:
+        print(base_expression, self.get_current_token())
         raise ParserError('Invalid expression')
       
       # check if terminators or end of module are not reached
@@ -704,8 +713,15 @@ class Parser:
         # require comma separator
         if len(expressions):
           self.skip_tokens(SPACE_TOKEN, NEWLINE_TOKEN)
+
           self.require_token(COMMA_TOKEN)
           self.consume_current_token()
+
+          self.skip_tokens(SPACE_TOKEN, NEWLINE_TOKEN)
+
+          if self.match_token(closing_operator):
+            self.consume_current_token()
+            break
 
         # add found expression
         expressions.append(self.parse_expression(None, BASE_PRECEDENCE, *grouping_terminators))
@@ -757,9 +773,9 @@ class Parser:
       # to "give operator back"
       self.position = position_before_grouping_operator
 
-      # return base expression if it is 
+      # continue parsing operations with base_expression
       if base_expression: 
-        return base_expression
+        return self.parse_expression(base_expression, BASE_PRECEDENCE, *terminators)
       
       # finish previous expression with passed tokens
       return self.parse_expression_from_tokens(passed_tokens)
@@ -773,8 +789,15 @@ class Parser:
         # require comma separator
         if len(entries):
           self.skip_tokens(SPACE_TOKEN, NEWLINE_TOKEN)
+
           self.require_token(COMMA_TOKEN)
           self.consume_current_token()
+          
+        self.skip_tokens(SPACE_TOKEN, NEWLINE_TOKEN)
+
+        if self.match_token(RIGHT_CURLY_BRACE_TOKEN):
+          self.consume_current_token()
+          break
 
         # parse key expression
         # search until association closing or colon
@@ -800,15 +823,15 @@ class Parser:
         self.skip_tokens(SPACE_TOKEN, NEWLINE_TOKEN)
 
       # validate expressions
-      if len(expressions):
+      if len(entries):
         # do not check last expression (trailing commas are allowed)
-        for i in range(len(expressions) - 1):
-          if is_expression_of_class(expressions[i], NullExpression):
+        for i in range(len(entries) - 1):
+          if is_expression_of_class(entries[i], NullExpression):
             raise ParserError('Incorrect expression in group')
           
         # remove last NullExpression (trailing comma case)
-        if is_expression_of_class(expressions[-1], NullExpression):
-          expressions.pop()
+        if is_expression_of_class(entries[-1], NullExpression):
+          entries.pop()
       
       # compose association
       expression = AssociationExpression(entries)

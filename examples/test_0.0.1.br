@@ -12,8 +12,9 @@ a += 1
 
 var d = externalFunction()
 
-var e = console.input("Input please: ")
-console.output(e)
+a++
 
 console.input("Hello from console: ")
+
 console.output(d)
+console.output(a)
