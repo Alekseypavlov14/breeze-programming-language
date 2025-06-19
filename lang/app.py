@@ -12,7 +12,7 @@ aliases = {
   "std": "C:/Users/User/Desktop/programming language/lang/stdlib/lib"
 }
 
-path = "C:/Users/User/Desktop/programming language/examples/test_0.0.1.br"
+path = "C:/Users/User/Desktop/programming language/examples/test.br"
 
 resolver = Resolver(aliases)
 resolver.resolve_modules(path)
