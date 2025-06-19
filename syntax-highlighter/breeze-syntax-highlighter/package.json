@@ -6,7 +6,7 @@
   "repository": {
     "url": "https://github.com/Alekseypavlov14/breeze-programming-language"
   },
-  "version": "0.0.3",
+  "version": "0.0.4",
   "engines": {
     "vscode": "^1.101.0"
   },
