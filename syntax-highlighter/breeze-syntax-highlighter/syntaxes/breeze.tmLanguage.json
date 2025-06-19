@@ -30,6 +30,9 @@
 			"include": "#strings"
 		},
 		{
+			"include": "#strings_single"
+		},
+		{
 			"include": "#numbers"
 		}
 	],
@@ -63,6 +66,17 @@
 			"name": "string.quoted.double.breeze",
 			"begin": "\"",
 			"end": "\"",
+			"patterns": [
+				{
+					"name": "constant.character.escape.breeze",
+					"match": "\\\\."
+				}
+			]
+		},
+		"strings_single": {
+			"name": "string.quoted.single.breeze",
+			"begin": "'",
+			"end": "'",
 			"patterns": [
 				{
 					"name": "constant.character.escape.breeze",
