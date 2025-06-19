@@ -7,9 +7,10 @@ export function type(value) {
 export function string(value) {
   return _builtin_types_string(value)
 }
+
 export function number(value) {
   return _builtin_types_number(value)
-}
+} 
 export function boolean(value) {
   return _builtin_types_boolean(value)
 }

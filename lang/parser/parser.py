@@ -85,6 +85,7 @@ class Parser:
 
     # if no assignment on this line - return uninitialized
     if self.match_token(NEWLINE_TOKEN):
+      self.require_newline_for_next_statements()
       return VariableDeclarationStatement(identifier, NullExpression())
     
     # if ASSIGN is present - parse expression
@@ -97,6 +98,8 @@ class Parser:
       expression = self.parse_expression(None, BASE_PRECEDENCE, NEWLINE_TOKEN, *terminators)
       if is_expression_of_class(expression, NullExpression):
         raise ParserError(f'Variable {identifier} has invalid initialization')
+      
+      self.require_newline_for_next_statements()
 
       return VariableDeclarationStatement(identifier, expression)
     
@@ -128,6 +131,8 @@ class Parser:
     initialization = self.parse_expression(None, BASE_PRECEDENCE, NEWLINE_TOKEN, *terminators)
     if is_expression_of_class(initialization, NullExpression):
       raise ParserError(f'Constant {identifier} has invalid initialization')
+
+    self.require_newline_for_next_statements()
 
     return ConstantDeclarationStatement(identifier, initialization)
   def parse_condition_statement(self, *terminators: Token):
@@ -454,9 +459,6 @@ class Parser:
     if not is_statement_of_class(exports, *allowed_exports):
       raise ParserError('Invalid export statement')
     
-    # require newline
-    self.require_newline_for_next_statements()
-
     return ExportStatement(exports)
   def parse_block_statement(self):
     # get left curly brace
@@ -649,9 +651,9 @@ class Parser:
       # to "give operator back"
       self.decrement_position()
 
-      # return base expression if it is 
+      # parse based on base_expression
       if base_expression: 
-        return base_expression
+        return self.parse_expression(base_expression, BASE_PRECEDENCE, *terminators)
       
       # finish previous expression with passed tokens
       return self.parse_expression_from_tokens(passed_tokens)
@@ -688,9 +690,9 @@ class Parser:
       # to "give operator back"
       self.decrement_position()
 
-      # return base expression if it is 
+      # parse based on base_expression 
       if base_expression: 
-        return base_expression
+        return self.parse_expression(base_expression, BASE_PRECEDENCE, *terminators)
       
       # finish previous expression with passed tokens
       return self.parse_expression_from_tokens(passed_tokens)
@@ -759,7 +761,7 @@ class Parser:
 
         # validate left expression
         if is_expression_of_class(left, NullExpression):
-          return grouping_expression
+          return self.parse_expression(grouping_expression, BASE_PRECEDENCE, *terminators)
         
         # compose expression
         expression = GroupingApplicationExpression(left, grouping_expression)
