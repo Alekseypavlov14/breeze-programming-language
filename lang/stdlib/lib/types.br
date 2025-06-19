@@ -1,0 +1,24 @@
+// function to get type of value
+export function type(value) {
+  return _builtin_types_type(value)
+}
+
+// types constructors
+export function string(value) {
+  return _builtin_types_string(value)
+}
+export function number(value) {
+  return _builtin_types_number(value)
+}
+export function boolean(value) {
+  return _builtin_types_boolean(value)
+}
+export function list(value) {
+  return _builtin_types_list(value)
+}
+export function tuple(value) {
+  return _builtin_types_tuple(value)
+}
+export function object(value) {
+  return _builtin_types_object(value)
+}

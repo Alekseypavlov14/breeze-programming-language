@@ -1,5 +1,7 @@
+import { string } from "@std/types.br"
+
 function output(message, end = "\n") {
-  _builtin_console_output(message + end)
+  _builtin_console_output(string(message) + end)
 }
 
 function input(prompt) {
