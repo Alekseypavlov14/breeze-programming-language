@@ -4,10 +4,6 @@ COMMENT_TOKEN = ('COMMENT', r'\/\/')
 NEWLINE_TOKEN = ('NEWLINE', r'\n')
 SPACE_TOKEN = ('SPACE', r'\s')
 
-# literals
-NUMBER_TOKEN = ('NUMBER', r'\d[\d\.]*')
-STRING_TOKEN = ('STRING', r"\"((?:[^\"\\]|\\.)*?)\"|\'((?:[^\'\\]|\\.)*?)\'")
-
 # function lambda
 LAMBDA_TOKEN = ('LAMBDA', r'=>')
 
@@ -62,24 +58,21 @@ RIGHT_CURLY_BRACE_TOKEN = ('RIGHT_CURLY_BRACE', r'\}')
 LEFT_SQUARE_BRACKET_TOKEN = ('LEFT_SQUARE_BRACKET', r'\[')
 RIGHT_SQUARE_BRACKET_TOKEN = ('RIGHT_SQUARE_BRACKET', r'\]')
 
-# quotes
-QUOTE_TOKEN = ('QUOTE', r'\'')
-DOUBLE_QUOTE_TOKEN = ('DOUBLE_QUOTE', r'\"')
-
 # special symbols
 COMMA_TOKEN = ('COMMA', r'\,')
 COLON_TOKEN = ('COLON', r':')
 SEMICOLON_TOKEN = ('SEMICOLON', r';')
 DOT_TOKEN = ('DOT', r'\.')
 
+# literals
+NUMBER_TOKEN = ('NUMBER', r'\d[\d\.]*')
+STRING_TOKEN = ('STRING', r"\'((?:[^\'\\]|\\.)*?)\'|\"((?:[^\"\\]|\\.)*?)\"")
+
 TOKEN_SPECIFICATION = [
   IDENTIFIER_TOKEN,
   COMMENT_TOKEN,
   NEWLINE_TOKEN,
   SPACE_TOKEN,
-
-  NUMBER_TOKEN,
-  STRING_TOKEN,
 
   LAMBDA_TOKEN,
   
@@ -129,13 +122,13 @@ TOKEN_SPECIFICATION = [
   LEFT_SQUARE_BRACKET_TOKEN,
   RIGHT_SQUARE_BRACKET_TOKEN,
   
-  QUOTE_TOKEN,
-  DOUBLE_QUOTE_TOKEN,
-  
   COMMA_TOKEN,
   COLON_TOKEN,
   SEMICOLON_TOKEN,
   DOT_TOKEN,
+
+  NUMBER_TOKEN,
+  STRING_TOKEN,
 ]
 
 # computes list token names
