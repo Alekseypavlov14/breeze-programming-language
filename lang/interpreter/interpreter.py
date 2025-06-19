@@ -53,7 +53,7 @@ class Interpreter:
 
   # Step 1) Load application modules
   # method to load app modules to application (sorted)
-  # creates stack for each module
+  # creates stack and exports for each module
   def load_modules(self, modules: list[Module]):
     # set modules list
     self.modules = modules

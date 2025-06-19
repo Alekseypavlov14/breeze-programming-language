@@ -1,6 +1,8 @@
 from interpreter.stack import *
 
 # list of types
+UNKNOWN_TYPE = 'UNKNOWN'
+
 NULL_TYPE = 'NULL'
 
 NUMBER_TYPE = 'NUMBER'
@@ -44,3 +46,5 @@ def get_value_type(value):
   
   if isinstance(value, FunctionValue):
     return FUNCTION_TYPE
+  
+  return UNKNOWN_TYPE
