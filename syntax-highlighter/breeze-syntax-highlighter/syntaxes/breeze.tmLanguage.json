@@ -24,6 +24,9 @@
 			"include": "#operators" 
 		},
 		{
+			"include": "#brackets"
+		},
+		{
 			"include": "#strings"
 		},
 		{
@@ -121,7 +124,23 @@
           "match": "\\b\\d+(\\.\\d+)?\\b"
         }
       ]
-    }
+    },
+		"brackets": {
+			"patterns": [
+				{
+					"match": "[\\{\\}]",
+					"name": "punctuation.section.braces.breeze"
+				},
+				{
+					"match": "[\\[\\]]",
+					"name": "punctuation.section.brackets.breeze"
+				},
+				{
+					"match": "[\\(\\)]",
+					"name": "punctuation.section.parens.breeze"
+				}
+			]
+		}
 	},
 	"scopeName": "source.breeze"
 }
