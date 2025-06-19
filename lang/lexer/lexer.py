@@ -45,6 +45,9 @@ class Lexer:
             # type is a keyword itself
             type = token
 
+          # escape special symbols in token
+          token = token.encode("utf-8").decode("unicode_escape")
+
           # add token
           tokens.append(Token(type, token))
 

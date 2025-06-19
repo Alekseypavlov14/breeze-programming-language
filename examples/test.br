@@ -1,5 +1,5 @@
 import { console } from "@std/console.br"
-import { number } from '@std/types.br'
+import { number } from "@std/types.br"
 
 const command = number(console.input("Insert command: "))
 
