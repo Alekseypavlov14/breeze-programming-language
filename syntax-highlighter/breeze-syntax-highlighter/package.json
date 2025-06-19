@@ -6,7 +6,7 @@
   "repository": {
     "url": "https://github.com/Alekseypavlov14/breeze-programming-language"
   },
-  "version": "0.0.1",
+  "version": "0.0.2",
   "engines": {
     "vscode": "^1.101.0"
   },
@@ -14,17 +14,26 @@
     "Programming Languages"
   ],
   "contributes": {
-    "languages": [{
-      "id": "breeze",
-      "aliases": ["Breeze", "breeze"],
-      "extensions": [".br"],
-      "configuration": "./language-configuration.json"
-    }],
-    "grammars": [{
-      "language": "breeze",
-      "scopeName": "source.breeze",
-      "path": "./syntaxes/breeze.tmLanguage.json"
-    }]
+    "languages": [
+      {
+        "id": "breeze",
+        "aliases": [
+          "Breeze",
+          "breeze"
+        ],
+        "extensions": [
+          ".br"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "breeze",
+        "scopeName": "source.breeze",
+        "path": "./syntaxes/breeze.tmLanguage.json"
+      }
+    ]
   },
   "configurationDefaults": {
     "breeze": {
