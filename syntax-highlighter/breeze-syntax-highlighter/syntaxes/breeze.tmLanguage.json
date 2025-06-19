@@ -3,7 +3,7 @@
 	"name": "Breeze",
 	"patterns": [
 		{
-			"include": "#comment"
+			"include": "#comments"
 		},
 		{
 			"include": "#keywords"
@@ -52,11 +52,7 @@
         {
           "name": "comment.line.double-slash.breeze",
           "begin": "//",
-          "beginCaptures": {
-            "0": { "name": "punctuation.definition.comment.breeze" }
-          },
-          "end": "\\n",
-          "patterns": []
+          "end": "\\n"
         }
       ]
     },
