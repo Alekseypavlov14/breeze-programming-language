@@ -14,9 +14,42 @@ for (var i = 0; i < 10; i++) {
   console.output("Iteration number: " + string(i))
 }
 
-var i = 0
-while (i < 10) {
+function iteration() {
   var input = console.input("Hello, insert int: ")
   console.output("You inserted " + input)
+}
+
+var i = 0
+while (i < 10) {
+  iteration()
   i++
 }
+
+
+function counter() {
+  var count = 0
+
+  function increment() {
+    count++
+  }
+  function decrement() {
+    count--
+  }
+  function get() {
+    return count
+  }
+
+  return {
+    increment: increment,
+    decrement: decrement,
+    get: get,
+  }
+}
+
+const c = counter()
+
+c.increment()
+c.decrement()
+c.increment()
+c.increment()
+console.output(c.get())
