@@ -85,7 +85,6 @@ class Parser:
 
     # if no assignment on this line - return uninitialized
     if self.match_token(NEWLINE_TOKEN):
-      self.require_newline_for_next_statements()
       return VariableDeclarationStatement(identifier, NullExpression())
     
     # if ASSIGN is present - parse expression
@@ -99,8 +98,6 @@ class Parser:
       if is_expression_of_class(expression, NullExpression):
         raise ParserError(f'Variable {identifier} has invalid initialization')
       
-      self.require_newline_for_next_statements()
-
       return VariableDeclarationStatement(identifier, expression)
     
     # if other symbol - raise error
@@ -131,8 +128,6 @@ class Parser:
     initialization = self.parse_expression(None, BASE_PRECEDENCE, NEWLINE_TOKEN, *terminators)
     if is_expression_of_class(initialization, NullExpression):
       raise ParserError(f'Constant {identifier} has invalid initialization')
-
-    self.require_newline_for_next_statements()
 
     return ConstantDeclarationStatement(identifier, initialization)
   def parse_condition_statement(self, *terminators: Token):
@@ -401,6 +396,12 @@ class Parser:
           self.require_token(COMMA_TOKEN)
           self.consume_current_token()
 
+        self.skip_tokens(SPACE_TOKEN, NEWLINE_TOKEN) 
+
+        # allow trailing comma
+        if self.match_token(RIGHT_CURLY_BRACE_TOKEN):
+          break
+
         # expect named import in curly braces
         self.require_token(IDENTIFIER_TOKEN)
         
@@ -413,6 +414,7 @@ class Parser:
         self.skip_tokens(SPACE_TOKEN, NEWLINE_TOKEN)
 
       # consume closing curly brace
+      self.require_token(RIGHT_CURLY_BRACE_TOKEN)
       self.consume_current_token()
 
     # parse asterisk (*) import

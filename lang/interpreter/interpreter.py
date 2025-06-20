@@ -194,7 +194,7 @@ class Interpreter:
   def execute_for_statement(self, statement: ForStatement, depth: int):
     self.current_stack.add_scope()
 
-    self.execute_statement(statement.initializer)
+    self.execute_statement(statement.initializer, depth + 1)
 
     while True:
       condition: ReadableContainer = self.evaluate_expression(statement.condition)
@@ -215,6 +215,8 @@ class Interpreter:
         continue
 
       self.evaluate_expression(statement.increment)
+
+    self.current_stack.remove_scope()
 
   def execute_break_statement(self, statement: BreakStatement):
     raise BreakException() # will be handled in loop
