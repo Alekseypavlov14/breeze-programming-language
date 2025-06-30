@@ -2,6 +2,7 @@ from lexer.exceptions import LexerError
 from lexer.token import *
 from shared.tokens import *
 from shared.keywords import *
+from shared.position import *
 
 # standard modules
 import re
@@ -66,7 +67,7 @@ class Lexer:
 
           # add token
           position = self.compute_current_token_position()
-          self.tokens.append(Token(type, token, position))
+          self.tokens.append(Token(position, type, token))
 
           # update flag to set current position matched
           current_position_match = True
@@ -75,7 +76,7 @@ class Lexer:
           break
         
       if not current_position_match:
-        raise LexerError(f'Invalid token on position {self.compute_current_token_position()}')
+        raise LexerError(self.compute_current_token_position(), 'Invalid token found')
 
     # return list of found tokens      
     return self.tokens.copy()

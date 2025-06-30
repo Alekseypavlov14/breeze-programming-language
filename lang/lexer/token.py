@@ -1,23 +1,15 @@
 from shared.tokens import TOKEN_NAMES
 from shared.keywords import KEYWORDS
+from shared.position import TokenPosition
 from lexer.exceptions import LexerError
-
-# indicates position of first token symbol
-class TokenPosition:
-  def __init__(self, row: int, column: int):
-    self.row = row
-    self.column = column
-
-  def __str__(self):
-    return f"{self.row}:{self.column}"
 
 # token - standalone part of code
 # represents identifiers, operators and others
 class Token:
-  def __init__(self, type: str, code: str, position: TokenPosition):
-    self.code = code
-    self.type = type
+  def __init__(self, position: TokenPosition, type: str, code: str):
     self.position = position
+    self.type = type
+    self.code = code
 
   @property
   def type(self):
@@ -26,7 +18,7 @@ class Token:
   @type.setter
   def type(self, type):
     if type not in TOKEN_NAMES and type not in KEYWORDS:
-      raise LexerError(f'Token "{self.code}" has invalid type: {type}')
+      raise LexerError(self.position, f'Token "{self.code}" has invalid type: {type}')
     self._type = type
 
   # overload equality operator
