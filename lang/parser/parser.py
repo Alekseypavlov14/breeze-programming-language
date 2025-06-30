@@ -96,12 +96,12 @@ class Parser:
 
       expression = self.parse_expression(None, BASE_PRECEDENCE, NEWLINE_TOKEN, *terminators)
       if is_expression_of_class(expression, NullExpression):
-        raise ParserError(f'Variable {identifier} has invalid initialization')
+        raise ParserError(self.get_current_token_position(), f'Variable {identifier} has invalid initialization')
       
       return VariableDeclarationStatement(identifier, expression)
     
     # if other symbol - raise error
-    raise ParserError('Invalid variable declaration')
+    raise ParserError(self.get_current_token_position(), 'Invalid variable declaration')
   def parse_constant_declaration(self, *terminators: Token):
      # require CONST keyword
     self.require_token(map_keyword_to_token(CONST_KEYWORD))
@@ -117,7 +117,7 @@ class Parser:
 
     # require ASSIGNMENT
     if not self.match_token(ASSIGN_TOKEN):
-      raise ParserError('Constant declaration without initialization')
+      raise ParserError(self.get_current_token_position(), 'Constant declaration without initialization')
     
     # consume ASSIGNMENT
     self.require_token(ASSIGN_TOKEN)
@@ -127,7 +127,7 @@ class Parser:
 
     initialization = self.parse_expression(None, BASE_PRECEDENCE, NEWLINE_TOKEN, *terminators)
     if is_expression_of_class(initialization, NullExpression):
-      raise ParserError(f'Constant {identifier} has invalid initialization')
+      raise ParserError(self.get_current_token_position(), f'Constant {identifier} has invalid initialization')
 
     return ConstantDeclarationStatement(identifier, initialization)
   def parse_condition_statement(self, *terminators: Token):
@@ -147,7 +147,7 @@ class Parser:
     condition = self.parse_expression(None, BASE_PRECEDENCE, RIGHT_PARENTHESES_TOKEN)
 
     if is_expression_of_class(condition, NullExpression):
-      raise ParserError('Condition statement has invalid expression in parentheses')
+      raise ParserError(self.get_current_token_position(), 'Condition statement has invalid expression in parentheses')
 
     self.skip_tokens(SPACE_TOKEN, NEWLINE_TOKEN)
 
@@ -459,7 +459,7 @@ class Parser:
 
     # validate export statement
     if not is_statement_of_class(exports, *allowed_exports):
-      raise ParserError('Invalid export statement')
+      raise ParserError(self.get_current_token_position(), 'Invalid export statement')
     
     return ExportStatement(exports)
   def parse_block_statement(self):
@@ -483,7 +483,7 @@ class Parser:
       # add new statement
       statements.append(self.parse_statement(RIGHT_CURLY_BRACE_TOKEN))
 
-    raise ParserError(f'Expected token {RIGHT_CURLY_BRACE_TOKEN}')
+    raise ParserError(self.get_current_token_position(), f'Expected token {RIGHT_CURLY_BRACE_TOKEN}')
   def parse_expression_statement(self, *terminators: Token):
     expression = self.parse_expression(None, BASE_PRECEDENCE, NEWLINE_TOKEN, *terminators)
 
@@ -582,7 +582,7 @@ class Parser:
       # if base_expression is followed by non-operator tokens - error in composition
       if base_expression:
         print(base_expression, self.get_current_token())
-        raise ParserError('Invalid expression')
+        raise ParserError(self.get_current_token_position(), 'Invalid expression')
       
       # check if terminators or end of module are not reached
       # when reach terminator or end of module, finish expression parsing
@@ -612,7 +612,7 @@ class Parser:
         if base_expression or len(passed_tokens):
           # if there are tokens - suffix operator
           if not is_suffix_unary_operator(operator) and not is_affix_unary_operator(operator):
-            raise ParserError('Prefix operator is used in suffix form')
+            raise ParserError(self.get_current_token_position(), 'Prefix operator is used in suffix form')
         
           # if operand is base_expression
           operand = base_expression
@@ -622,7 +622,7 @@ class Parser:
 
           # validate operand
           if is_expression_of_class(operand, NullExpression):
-            raise ParserError(f'Unary operator {operator.code} requires operand')
+            raise ParserError(self.get_current_token_position(), f'Unary operator {operator.code} requires operand')
           
           # compose expression
           expression = SuffixUnaryOperationExpression(operator, operand)
@@ -633,14 +633,14 @@ class Parser:
         # if no tokens and no base expression - prefix operator
         # validate operator
         if not is_prefix_unary_operator(operator) and not is_affix_unary_operator(operator):
-          raise ParserError('Suffix operator is used in prefix form')
+          raise ParserError(self.get_current_token_position(), 'Suffix operator is used in prefix form')
         
         # no base expression because no tokens, started with operator
         operand = self.parse_expression(None, precedence, *terminators)
         
         # validate operand
         if is_expression_of_class(operand, NullExpression):
-          raise ParserError(f'Unary operator {operator.code} requires operand')
+          raise ParserError(self.get_current_token_position(), f'Unary operator {operator.code} requires operand')
 
         expression = PrefixUnaryOperationExpression(operator, operand)
 
@@ -672,13 +672,13 @@ class Parser:
 
         # validate operand
         if is_expression_of_class(left_branch, NullExpression):
-          raise ParserError(f'Binary operator {operator.code} requires left operand')
+          raise ParserError(self.get_current_token_position(), f'Binary operator {operator.code} requires left operand')
 
         right_branch = self.parse_expression(None, precedence, *terminators)
 
         # validate operand
         if is_expression_of_class(right_branch, NullExpression):
-          raise ParserError(f'Binary operator {operator.code} requires right operand')
+          raise ParserError(self.get_current_token_position(), f'Binary operator {operator.code} requires right operand')
         
         # compose expression
         expression = BinaryOperationExpression(operator, left_branch, right_branch)
@@ -737,7 +737,7 @@ class Parser:
         # do not check last expression (trailing commas are allowed)
         for i in range(len(expressions) - 1):
           if is_expression_of_class(expressions[i], NullExpression):
-            raise ParserError('Incorrect expression in group')
+            raise ParserError(self.get_current_token_position(), 'Incorrect expression in group')
           
         # remove last NullExpression (trailing comma case)
         if is_expression_of_class(expressions[-1], NullExpression):
@@ -808,7 +808,7 @@ class Parser:
         key_expression = self.parse_expression(None, BASE_PRECEDENCE, RIGHT_CURLY_BRACE_TOKEN, COLON_TOKEN)
 
         if is_expression_of_class(key_expression, NullExpression):
-          raise ParserError('Invalid key expression')
+          raise ParserError(self.get_current_token_position(), 'Invalid key expression')
 
         # require and consume colon
         self.require_token(COLON_TOKEN)
@@ -819,7 +819,7 @@ class Parser:
         value_expression = self.parse_expression(None, BASE_PRECEDENCE, RIGHT_CURLY_BRACE_TOKEN, COMMA_TOKEN)
 
         if is_expression_of_class(value_expression, NullExpression):
-          raise ParserError('Invalid value expression')
+          raise ParserError(self.get_current_token_position(), 'Invalid value expression')
 
         # append entry
         entries.append((key_expression, value_expression))
@@ -831,7 +831,7 @@ class Parser:
         # do not check last expression (trailing commas are allowed)
         for i in range(len(entries) - 1):
           if is_expression_of_class(entries[i], NullExpression):
-            raise ParserError('Incorrect expression in group')
+            raise ParserError(self.get_current_token_position(), 'Incorrect expression in group')
           
         # remove last NullExpression (trailing comma case)
         if is_expression_of_class(entries[-1], NullExpression):
@@ -856,7 +856,7 @@ class Parser:
     for token in tokens:
       print(token)
     
-    raise ParserError(f'Invalid expression starting with token: {tokens[0]}')
+    raise ParserError(self.get_current_token_position(), f'Invalid expression starting with token: {tokens[0]}')
     
   def match_literal_expression(self, tokens: list[Token]):
     return len(tokens) == LITERAL_TOKENS_LENGTH and is_literal_token(tokens[0])
@@ -872,7 +872,7 @@ class Parser:
 
     # validate token type
     if not self.match_token(token):
-      raise ParserError(f'Expected token {token}. Received {current}')
+      raise ParserError(self.get_current_token_position(), f'Expected token {token}. Received {current}')
     
   # checks current token. Returns bool
   # receives tokens
@@ -918,6 +918,10 @@ class Parser:
   def get_previous_token(self):
     return self.tokens[self.position - 1]
 
+  # get position
+  def get_current_token_position(self):
+    return self.get_current_token().position
+  
   # moves position forward
   def increment_position(self):
     self.position += 1 
