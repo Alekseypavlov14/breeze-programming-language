@@ -1,18 +1,16 @@
-from lexer.lexer import Lexer
-from parser.parser import Parser
 from resolution.resolver import Resolver
 from interpreter.interpreter import Interpreter
 
-from stdlib.builtin.builtins import *
+from builtins.builtins import *
 
 # THIS CODE IS TEST
 
 aliases = {
   "base": "C:/Users/User/Desktop/programming language/examples",
-  "std": "C:/Users/User/Desktop/programming language/lang/stdlib/lib"
+  "std": "C:/Users/User/Desktop/programming language/stdlib"
 }
 
-path = "C:/Users/User/Desktop/programming language/examples/test.br"
+path = "C:/Users/User/Desktop/programming language/examples/loops.br"
 
 resolver = Resolver(aliases)
 resolver.resolve_modules(path)

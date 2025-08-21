@@ -1,5 +1,5 @@
-import stdlib.builtin.modules.types as types
-import stdlib.builtin.modules.console as console
+import builtins.modules.types as types
+import builtins.modules.console as console
 
 # compose list of all builtin declarations
 builtins = [

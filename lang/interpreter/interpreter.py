@@ -6,7 +6,7 @@ from interpreter.types import *
 from resolution.resolver import *
 from resolution.module import *
 
-from stdlib.builtin.declarations import *
+from builtins.declarations import *
 
 from parser.types.expressions import *
 from parser.types.statements import *

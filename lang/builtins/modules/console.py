@@ -1,4 +1,4 @@
-from stdlib.builtin.declarations import *
+from builtins.declarations import *
 
 # implementation for console output
 # defines simplest console output

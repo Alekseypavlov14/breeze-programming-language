@@ -1,0 +1,16 @@
+import { console } from '@std/console.br'
+import { string } from '@std/types.br' 
+
+// For loop
+for (var i = 0; i < 10; i++) {
+  console.output("Iteration number: " + string(i))
+}
+
+// While loop
+var i = 0
+while (i < 10) {
+  var input = console.input("Hello, insert int: ")
+  console.output("You inserted " + input)
+  
+  i++
+}

@@ -13,7 +13,7 @@ Stack has a ```.copy()``` method that copies the list of scopes with **shallow c
 
 # Logic of consecutive execution
 
-Each module is executed with its own stack and then the pointer to current module and current stack is changed. Stacks **are saved** after module is executed.
+Each module is executed with its own stack and then the pointer to current module and current stack is changed. Stacks **are saved** after module is executed to store closures.
 
 # Module execution
 
