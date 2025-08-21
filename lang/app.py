@@ -6,15 +6,6 @@ from interpreter.interpreter import Interpreter
 
 from builtins.builtins import *
 
-# THIS CODE IS TEST
-
-aliases = {
-  "base": "C:/Users/User/Desktop/programming language/examples",
-  "std": "C:/Users/User/Desktop/programming language/stdlib"
-}
-
-path = "C:/Users/User/Desktop/programming language/examples/loops.br"
-
 def execute_code():
   config = get_config()
 
@@ -30,3 +21,6 @@ def execute_code():
   interpreter.load_modules(modules)
   interpreter.register_builtins(builtins)
   interpreter.execute()
+
+# entry point of the interpreter
+execute_code()
