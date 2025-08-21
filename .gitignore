@@ -1,4 +1,8 @@
 **/__pycache__/
 *.pyc
 
-ideas.txt
+# ignore binaries
+bin
+
+# ignore private docs
+docs/compilation
