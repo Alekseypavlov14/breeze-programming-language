@@ -4,7 +4,7 @@ from config.constants import *
 from resolution.resolver import Resolver
 from interpreter.interpreter import Interpreter
 
-from builtins.builtins import *
+from builtin.builtin import *
 
 def execute_code():
   config = get_config()

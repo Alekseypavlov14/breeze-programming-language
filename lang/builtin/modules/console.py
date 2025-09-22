@@ -1,4 +1,4 @@
-from builtins.declarations import *
+from builtin.declarations import *
 
 # implementation for console output
 # defines simplest console output

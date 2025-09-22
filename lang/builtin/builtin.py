@@ -1,5 +1,5 @@
-import builtins.modules.types as types
-import builtins.modules.console as console
+import builtin.modules.types as types
+import builtin.modules.console as console
 
 # compose list of all builtin declarations
 builtins = [

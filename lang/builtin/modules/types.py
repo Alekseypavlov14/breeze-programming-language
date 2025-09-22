@@ -1,6 +1,6 @@
 from interpreter.types import *
 from interpreter.exceptions import *
-from builtins.declarations import *
+from builtin.declarations import *
 
 # maps python type to Breeze type constant name
 map_type_to_string = {
